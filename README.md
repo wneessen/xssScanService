@@ -169,7 +169,6 @@ The server provides the following CLI parameters to override defaults
 - ```-l, --listen <IP address or hostname>```: The IP/hostname for the server to listen on (Default: 127.0.0.1)
 - ```-p, --port <Port>```: The port for the server to listen on (Default: 8099)
 - ```-t, --timeout <timeout in seconds>```: Amount of seconds until the webservice times out
-- ```-t, --timeout <timeout in seconds>```: Amount of seconds until the webservice times out
 - ```-c, --cache```: Enable caching of websites
 - ```-d, --debug```: Enable DEBUG mode (more logging)
 - ```--returnerrors```: If set, the response object will return resource errors

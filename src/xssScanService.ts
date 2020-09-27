@@ -21,7 +21,7 @@ const expressObj = Express()
 const httpServer = httpObj.createServer(expressObj);
 
 // Some constant variables
-const versionNum: string = '1.1.0';
+const versionNum: string = '1.1.1';
 
 // Express exception handlers
 httpServer.on('error', errMsg => {
@@ -58,6 +58,7 @@ try {
         '--debug': Boolean,
         '--perf': Boolean,
         '--cache': Boolean,
+        '--help': Boolean,
         '--returnerrors': Boolean,
         '--block': [String],
 
@@ -67,11 +68,14 @@ try {
         '-t': '--timeout',
         '-b': '--block',
         '-c': '--cache',
-        '-d': '--debug'
+        '-d': '--debug',
+        '-h': '--help'
     }, { argv: process.argv.slice(2) });
 }
 catch(errorObj) {
     console.error(`Error: ${errorObj.message}`);
+    console.log('');
+    showHelp();
     process.exit(1);
 }
 
@@ -84,6 +88,9 @@ if(typeof cliArgs["--debug"] !== 'undefined') { configObj.debugMode = true };
 if(typeof cliArgs["--perf"] !== 'undefined') { configObj.perfMode = true; };
 if(typeof cliArgs["--cache"] !== 'undefined') { configObj.allowCache = true };
 if(typeof cliArgs["--returnerrors"] !== 'undefined') { configObj.returnErrors = true };
+
+// Show help
+if(typeof cliArgs["--help"] !== 'undefined') { showHelp(); process.exit(0); };
 
 // Express webservice options
 expressObj.use(Express.urlencoded({ extended: true }));
@@ -129,6 +136,19 @@ async function startServer() {
     httpServer.listen(configObj.listenPort, configObj.listenHost, () => {
         console.log(`Server accepting requests on ${configObj.listenHost}:${configObj.listenPort}`);
     });
+}
+
+function showHelp() {
+    console.log('Usage: node xssScanService.js [arguments]');
+    console.log('  -b, --block <domains>\t\t\tAdd additional blocklist domain (can be used multiple times)');
+    console.log('  -l, --listen <IP address or hostname>\tThe IP/hostname for the server to listen on (Default: 127.0.0.1)');
+    console.log('  -p, --port <port>\t\t\tThe port for the server to listen on (Default: 8099)');
+    console.log('  -t, --timeout <seconds>\t\tAmount of seconds until the request times out');
+    console.log('  -c, --cache\t\t\t\tEnable caching of websites');
+    console.log('  --returnerrors\t\t\tIf set, the response object will return resource errors');
+    console.log('  --perf\t\t\t\tIf set, the response object will return performance date');
+    console.log('  -d, --debug\t\t\t\tEnable DEBUG mode');
+    console.log('  -h, --help\t\t\t\tShow this help text');
 }
 
 startServer();
