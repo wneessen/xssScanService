@@ -34,7 +34,7 @@ process_1.default.on('SIGINT', () => {
 });
 const expressObj = express_1.default();
 const httpServer = httpObj.createServer(expressObj);
-const versionNum = '1.1.1';
+const versionNum = '1.2.0';
 httpServer.on('error', errMsg => {
     console.error(`Unable to start webservice: ${errMsg}`);
     process_1.default.exit(1);
@@ -55,6 +55,10 @@ const configObj = {
     allowCache: false,
     userAgent: `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 xssScanService/${versionNum}`
 };
+const pupLaunchOptions = {
+    headless: true,
+    args: [],
+};
 let cliArgs;
 try {
     cliArgs = arg_1.default({
@@ -66,14 +70,18 @@ try {
         '--cache': Boolean,
         '--help': Boolean,
         '--returnerrors': Boolean,
+        '--ignoresslerrors': Boolean,
         '--block': [String],
+        '--browserpath': String,
+        '--browsertype': String,
         '-l': '--listen',
         '-p': '--port',
         '-t': '--timeout',
         '-b': '--block',
         '-c': '--cache',
         '-d': '--debug',
-        '-h': '--help'
+        '-h': '--help',
+        '-s': '--ignoresslerrors'
     }, { argv: process_1.default.argv.slice(2) });
 }
 catch (errorObj) {
@@ -114,6 +122,27 @@ if (typeof cliArgs["--returnerrors"] !== 'undefined') {
     configObj.returnErrors = true;
 }
 ;
+if (typeof cliArgs["--ignoresslerrors"] !== 'undefined') {
+    pupLaunchOptions.ignoreHTTPSErrors = true;
+}
+;
+if (typeof cliArgs["--browserpath"] !== 'undefined') {
+    pupLaunchOptions.executablePath = cliArgs["--browserpath"];
+}
+;
+if (typeof cliArgs["--browsertype"] !== 'undefined' &&
+    (cliArgs["--browsertype"].toLowerCase() === 'firefox' || cliArgs["--browsertype"].toLowerCase() === 'chrome')) {
+    if (typeof cliArgs["--browserpath"] === 'undefined') {
+        console.error('Error: Parameter --browsertype requires a custom browser path via --browserpath');
+        console.log('');
+        showHelp();
+        process_1.default.exit(1);
+    }
+    else {
+        pupLaunchOptions.product = cliArgs["--browsertype"];
+    }
+}
+;
 if (typeof cliArgs["--help"] !== 'undefined') {
     showHelp();
     process_1.default.exit(0);
@@ -122,12 +151,7 @@ if (typeof cliArgs["--help"] !== 'undefined') {
 expressObj.use(express_1.default.urlencoded({ extended: true }));
 expressObj.use(express_1.default.json());
 async function startServer() {
-    const browserObj = await puppeteer_1.default.launch({
-        headless: true,
-        args: [
-            "--disable-gpu",
-        ]
-    }).catch(errorMsg => {
+    const browserObj = await puppeteer_1.default.launch(pupLaunchOptions).catch(errorMsg => {
         console.error(`Unable to start Browser: ${errorMsg}`);
         process_1.default.exit(1);
     });
@@ -163,8 +187,11 @@ function showHelp() {
     console.log('  -p, --port <port>\t\t\tThe port for the server to listen on (Default: 8099)');
     console.log('  -t, --timeout <seconds>\t\tAmount of seconds until the request times out');
     console.log('  -c, --cache\t\t\t\tEnable caching of websites');
+    console.log('  -s, --ignoresslerrors\t\t\tIgnore HTTPS errors');
     console.log('  --returnerrors\t\t\tIf set, the response object will return resource errors');
     console.log('  --perf\t\t\t\tIf set, the response object will return performance date');
+    console.log('  --browserpath <path>\t\t\tPath to browser executable (Using Firefox requires --browsertype firefox)');
+    console.log('  --browsertype <firefox|chrome>\tType of browser to use (Requires --browserpath to be set)');
     console.log('  -d, --debug\t\t\t\tEnable DEBUG mode');
     console.log('  -h, --help\t\t\t\tShow this help text');
 }

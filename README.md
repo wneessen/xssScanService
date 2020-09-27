@@ -170,9 +170,12 @@ The server provides the following CLI parameters to override defaults
 - ```-p, --port <Port>```: The port for the server to listen on (Default: 8099)
 - ```-t, --timeout <timeout in seconds>```: Amount of seconds until the webservice times out
 - ```-c, --cache```: Enable caching of websites
+- ```-s, --ignoresslerrors```: Ignore HTTPS errors
 - ```-d, --debug```: Enable DEBUG mode (more logging)
 - ```--returnerrors```: If set, the response object will return resource errors
 - ```--perf```: If set, the response object will return performance data
+- ```--browserpath <path to browser executabel>```: Run Puppeteer with a different browser (Chrome/Firefox supported)
+- ```--browsertype <chrome|firefox>```: Run Puppeteer with a different browser type (Requires: --browserpath to be set)
 
 ## Startup script
 The service comes with a startup script in the ```./bin```-directory called ```startProdServer.sh```

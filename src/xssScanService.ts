@@ -21,7 +21,7 @@ const expressObj = Express()
 const httpServer = httpObj.createServer(expressObj);
 
 // Some constant variables
-const versionNum: string = '1.1.1';
+const versionNum: string = '1.2.0';
 
 // Express exception handlers
 httpServer.on('error', errMsg => {
@@ -46,6 +46,10 @@ const configObj: IXssScanConfig = {
     allowCache: false,
     userAgent: `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 xssScanService/${versionNum}`
 };
+const pupLaunchOptions: Puppeteer.LaunchOptions = {
+    headless: true,
+    args: [],
+};
 
 // Read command line options
 let cliArgs;
@@ -60,7 +64,10 @@ try {
         '--cache': Boolean,
         '--help': Boolean,
         '--returnerrors': Boolean,
+        '--ignoresslerrors': Boolean,
         '--block': [String],
+        '--browserpath': String,
+        '--browsertype': String,
 
         // Aliases
         '-l': '--listen',
@@ -69,7 +76,8 @@ try {
         '-b': '--block',
         '-c': '--cache',
         '-d': '--debug',
-        '-h': '--help'
+        '-h': '--help',
+        '-s': '--ignoresslerrors'
     }, { argv: process.argv.slice(2) });
 }
 catch(errorObj) {
@@ -88,6 +96,22 @@ if(typeof cliArgs["--debug"] !== 'undefined') { configObj.debugMode = true };
 if(typeof cliArgs["--perf"] !== 'undefined') { configObj.perfMode = true; };
 if(typeof cliArgs["--cache"] !== 'undefined') { configObj.allowCache = true };
 if(typeof cliArgs["--returnerrors"] !== 'undefined') { configObj.returnErrors = true };
+if(typeof cliArgs["--ignoresslerrors"] !== 'undefined') { pupLaunchOptions.ignoreHTTPSErrors = true };
+if(typeof cliArgs["--browserpath"] !== 'undefined') { pupLaunchOptions.executablePath = cliArgs["--browserpath"] };
+if(
+    typeof cliArgs["--browsertype"] !== 'undefined' && 
+    (cliArgs["--browsertype"].toLowerCase() === 'firefox' || cliArgs["--browsertype"].toLowerCase() === 'chrome')
+) {
+    if(typeof cliArgs["--browserpath"] === 'undefined') {
+        console.error('Error: Parameter --browsertype requires a custom browser path via --browserpath');
+        console.log('');
+        showHelp();
+        process.exit(1);
+    }
+    else {
+        pupLaunchOptions.product = (cliArgs["--browsertype"] as Puppeteer.Product)
+    }
+};
 
 // Show help
 if(typeof cliArgs["--help"] !== 'undefined') { showHelp(); process.exit(0); };
@@ -98,12 +122,7 @@ expressObj.use(Express.json());
 
 // Initialize the webservice
 async function startServer() {
-    const browserObj = await Puppeteer.launch({
-        headless: true,
-        args: [
-            "--disable-gpu",
-        ]
-    }).catch(errorMsg => {
+    const browserObj = await Puppeteer.launch(pupLaunchOptions).catch(errorMsg => {
         console.error(`Unable to start Browser: ${errorMsg}`);
         process.exit(1);
     });
@@ -145,8 +164,11 @@ function showHelp() {
     console.log('  -p, --port <port>\t\t\tThe port for the server to listen on (Default: 8099)');
     console.log('  -t, --timeout <seconds>\t\tAmount of seconds until the request times out');
     console.log('  -c, --cache\t\t\t\tEnable caching of websites');
+    console.log('  -s, --ignoresslerrors\t\t\tIgnore HTTPS errors');
     console.log('  --returnerrors\t\t\tIf set, the response object will return resource errors');
     console.log('  --perf\t\t\t\tIf set, the response object will return performance date');
+    console.log('  --browserpath <path>\t\t\tPath to browser executable (Using Firefox requires --browsertype firefox)');
+    console.log('  --browsertype <firefox|chrome>\tType of browser to use (Requires --browserpath to be set)');
     console.log('  -d, --debug\t\t\t\tEnable DEBUG mode');
     console.log('  -h, --help\t\t\t\tShow this help text');
 }

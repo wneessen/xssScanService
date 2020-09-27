@@ -38,6 +38,32 @@ if [ "x${LISTENHOST}" != "x" ]; then
     STARTPARMS="${STARTPARMS} -l ${LISTENHOST}"
 fi
 
+if [ "x${SHOWERRORS}" = "xtrue" ]; then
+    STARTPARMS="${STARTPARMS} --returnerrors"
+fi
+
+if [ "x${SHOWPERFORMANCE}" = "xtrue" ]; then
+    STARTPARMS="${STARTPARMS} --perf"
+fi
+
+if [ "x${ENABLECACHING}" = "xtrue" ]; then
+    STARTPARMS="${STARTPARMS} --cache"
+fi
+
+if [ "x${BROWSERPATH}" != "x" ]; then
+    STARTPARMS="${STARTPARMS} --browserpath ${BROWSERPATH}"
+fi
+
+if [ "x${BROWSERTYPE}" != "x" ]; then
+    STARTPARMS="${STARTPARMS} --browsertype ${BROWSERTYPE}"
+fi
+
+if [ "x${BLOCKLIST}" != "x" ]; then
+    for DOMAIN in ${BLOCKLIST}; do
+        STARTPARMS="${STARTPARMS} -b ${DOMAIN}"
+    done
+fi
+
 case "${1}" in
     start)
         ${NODEJS} ${BASEDIR}/dist/xssScanService.js ${STARTPARMS}
