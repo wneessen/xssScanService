@@ -9,6 +9,7 @@ Restart=always
 RestartSec=10
 ExecStart=/usr/bin/bash /usr/local/xssScanService/bin/startProdServer.sh start
 ExecStop=/usr/bin/bash /usr/local/xssScanService/bin/startProdServer.sh stop
+#User=youruser
 
 [Install]
 WantedBy=multi-user.target
