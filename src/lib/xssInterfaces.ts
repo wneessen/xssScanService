@@ -12,6 +12,7 @@ interface IXssScanConfig {
     reqTimeout: number,
     debugMode: boolean,
     perfMode: boolean,
+    returnErrors: boolean,
     webSecEnable: boolean,
     userAgent: string,
     allowCache?: boolean,
@@ -28,6 +29,7 @@ interface IXssObj {
     hasXss: boolean,
     requestData: IXssReqObj,
     responseData: IXssResObj,
+    performanceData?: string,
     xssData: Array<IXssDataObj>,
     resourceErrors?: Array<IReturnResourceError>,
     blockedUrls?: Array<string>,
@@ -76,8 +78,22 @@ interface IXssDataObj {
 interface IReturnResourceError {
     url: string,
     errorCode: string,
-    errorString: string
+    statusCode: number,
+    statusText: string
+}
+
+/**
+ * HTTP Request data - For request interception
+ *
+ * @interface IRequestData
+*/
+interface IRequestData {
+    headers?: Record<string, string>,
+    url?: string,
+    postData?: string,
+    method?: string,
 }
 
 
-export { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError }
+
+export { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData }

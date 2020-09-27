@@ -20,7 +20,7 @@ const expressObj = Express()
 const httpServer = httpObj.createServer(expressObj);
 
 // Some constant variables
-const versionNum: string = '0.1.0';
+const versionNum: string = '1.0.0';
 
 // Express exception handlers
 httpServer.on('error', (errMsg) => {
@@ -38,6 +38,7 @@ const configObj: IXssScanConfig = {
     debugMode: false,
     perfMode: false,
     webSecEnable: false,
+    returnErrors: false,
     resBlockList: [
         'googletagmanager.com', 'google-analytics.com', 'optimizely.com', '.amazon-adsystem.com',
         'device-metrics-us.amazon.com', 'crashlytics.com', 'doubleclick.net'
@@ -57,6 +58,7 @@ try {
         '--debug': Boolean,
         '--perf': Boolean,
         '--cache': Boolean,
+        '--returnerrors': Boolean,
         '--block': [String],
 
         // Aliases
@@ -79,8 +81,9 @@ if(typeof cliArgs["--port"] !== 'undefined' && !isNaN(cliArgs["--port"]) && !(cl
 if(typeof cliArgs["--timeout"] !== 'undefined' && !isNaN(cliArgs["--timeout"]) && !(cliArgs["--timeout"] < 0 || cliArgs["--timeout"] > 300)) { configObj.reqTimeout = cliArgs["--timeout"] };
 if(typeof cliArgs["--block"] !== 'undefined') { cliArgs["--block"].forEach(blockDomain => configObj.resBlockList.push(blockDomain)); };
 if(typeof cliArgs["--debug"] !== 'undefined') { configObj.debugMode = true };
-if(typeof cliArgs["--perf"] !== 'undefined') { configObj.debugMode = true; configObj.perfMode = true; };
+if(typeof cliArgs["--perf"] !== 'undefined') { configObj.perfMode = true; };
 if(typeof cliArgs["--cache"] !== 'undefined') { configObj.allowCache = true };
+if(typeof cliArgs["--returnerrors"] !== 'undefined') { configObj.returnErrors = true };
 
 // Express webservice options
 expressObj.use(Express.urlencoded({ extended: true }));

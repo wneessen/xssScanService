@@ -34,7 +34,7 @@ process_1.default.on('SIGINT', () => {
 });
 const expressObj = express_1.default();
 const httpServer = httpObj.createServer(expressObj);
-const versionNum = '0.1.0';
+const versionNum = '1.0.0';
 httpServer.on('error', (errMsg) => {
     console.error(`Unable to start webservice: ${errMsg}`);
     process_1.default.exit(1);
@@ -46,6 +46,7 @@ const configObj = {
     debugMode: false,
     perfMode: false,
     webSecEnable: false,
+    returnErrors: false,
     resBlockList: [
         'googletagmanager.com', 'google-analytics.com', 'optimizely.com', '.amazon-adsystem.com',
         'device-metrics-us.amazon.com', 'crashlytics.com', 'doubleclick.net'
@@ -62,6 +63,7 @@ try {
         '--debug': Boolean,
         '--perf': Boolean,
         '--cache': Boolean,
+        '--returnerrors': Boolean,
         '--block': [String],
         '-l': '--listen',
         '-p': '--port',
@@ -96,12 +98,15 @@ if (typeof cliArgs["--debug"] !== 'undefined') {
 }
 ;
 if (typeof cliArgs["--perf"] !== 'undefined') {
-    configObj.debugMode = true;
     configObj.perfMode = true;
 }
 ;
 if (typeof cliArgs["--cache"] !== 'undefined') {
     configObj.allowCache = true;
+}
+;
+if (typeof cliArgs["--returnerrors"] !== 'undefined') {
+    configObj.returnErrors = true;
 }
 ;
 expressObj.use(express_1.default.urlencoded({ extended: true }));

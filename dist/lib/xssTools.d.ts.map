@@ -1,0 +1,1 @@
+{"version":3,"file":"xssTools.d.ts","sourceRoot":"","sources":["../../src/lib/xssTools.ts"],"names":[],"mappings":"AAAA,OAAO,SAAS,MAAM,WAAW,CAAC;AAElC,MAAM,CAAC,OAAO,OAAO,QAAQ;IAQlB,aAAa,CAAC,UAAU,EAAE,GAAG,GAAG,UAAU,IAAI,SAAS,CAAC,MAAM;CAGxE"}

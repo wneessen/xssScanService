@@ -1,8 +1,8 @@
 import Express from 'express';
-import Puppeteer from 'puppeteer';
-import Getopt from 'node-getopt';
-import { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError } from './xssInterfaces';
-import { nextTick } from 'process';
+import Puppeteer, { ErrorCode } from 'puppeteer';
+import XssTools from './xssTools';
+import { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData } from './xssInterfaces';
+import { textChangeRangeIsUnchanged } from 'typescript';
 
 export default class XssScanner {
     private browserObj: Puppeteer.Browser;
@@ -11,6 +11,9 @@ export default class XssScanner {
     private xssReqData: IXssReqObj = null;
     private xssResData: IXssResObj = null;
     private xssObj: IXssObj = null;
+    private requestData: IRequestData = {};
+    private benchMark: number = null;
+    private toolsObj: XssTools = new XssTools();
     
     /**
      * Constructor
@@ -24,10 +27,17 @@ export default class XssScanner {
         this.configObj  = configObj;
     }
 
-    public async processRequest(reqObj: Express.Request, resObj: Express.Response) {
+    /**
+     * Process the incomping ExpressJS request
+     *
+     * @param {Express.Request} reqObj The ExpressJS HTTP request object
+     * @param {Express.Response} reqObj The ExpressJS HTTP response object
+     * @returns {Promise<Express.Response>}
+     * @memberof XssScanner
+    */
+    public async processRequest(reqObj: Express.Request, resObj: Express.Response): Promise<Express.Response> {
         reqObj.setTimeout(this.configObj.reqTimeout * 1000);
         const dateObj = new Date();
-        let benchMark = Date.now();
         this.xssReqData = {
             alertOnAnyEvent: false,
             checkUrl: null,
@@ -49,62 +59,208 @@ export default class XssScanner {
             xssData: [],
             resourceErrors: []
         };
-        this.processPage();
+        if(this.configObj.debugMode) {
+            console.log('Received new HTTP request');
+            if(reqObj.body) {
+                console.log('postData:',  reqObj.body);
+            }
+        }
+        if(reqObj.body.searchfor) {
+            this.xssObj.requestData.searchString = reqObj.body.searchfor;
+        }
+        if(reqObj.body.everyevent && reqObj.body.everyevent === 'true') {
+            this.xssObj.requestData.alertOnAnyEvent = true;
+        }
+        if(reqObj.body.reqmethod) {
+            if(reqObj.body.reqmethod.toUpperCase() !== 'POST' && reqObj.body.reqmethod.toUpperCase() !== 'GET') {
+                this.xssObj.requestData.reqMethod = `${reqObj.body.reqmethod.toUpperCase()}_NOT_SUPPORTED`;
+            }
+            else {
+                this.xssObj.requestData.reqMethod = reqObj.body.reqmethod.toUpperCase();
+            }
+        }
+        if(reqObj.body.url) {
+            this.xssObj.requestData.checkUrl = reqObj.body.url;
+        }
+        if(reqObj.body.querystring) {
+            this.xssObj.requestData.queryString = reqObj.body.url.includes('?') ? `&${reqObj.body.querystring}` : `?${reqObj.body.querystring}`
+        }
 
-        resObj.send(this.xssObj);
+        if(
+            (!this.xssObj.requestData.checkUrl || this.xssObj.requestData.checkUrl === '') ||
+            this.xssObj.requestData.reqMethod.match(/_NOT_SUPPORTED$/) ||
+            (this.xssObj.requestData.queryString === null && this.xssObj.requestData.alertOnAnyEvent === false)
+        ) {
+            this.xssObj.responseData.statusCode = 400;
+            this.xssObj.responseData.errorMsg = 'Missing or invalid request parameters';
+            return resObj.status(400).json(this.xssObj);
+        }
+        else {
+            await this.processPage();
+            if(this.configObj.debugMode) {
+                console.debug(`Request completed in ${(this.xssObj.responseData.requestTime / 1000).toFixed(3)} sec`);
+            }
+            return resObj.json(this.xssObj);
+        }
+
     }
 
-
+    /**
+     * Perform the web request and process the page
+     *
+     * @returns {Promise<void>}
+     * @memberof XssScanner
+    */
     private async processPage() {
-
         // Initialize Webbrowser page object
         const pageObj = this.configObj.allowCache === true ? await this.browserObj.newPage() : await this.browserCtx.newPage();
         await pageObj.setUserAgent(this.configObj.userAgent).catch();
         await pageObj.setRequestInterception(true);
         
         // Event handler
+        pageObj.once('request', requestObj => this.modifyRequest(requestObj));         
         pageObj.on('request', requestObj => this.checkBlocklist(requestObj));         
+        pageObj.on('console', eventObj => this.eventTriggered(eventObj));
+        pageObj.on('dialog', eventObj => this.eventTriggered(eventObj));
+        pageObj.on('requestfailed', requestObj => this.errorTriggered(requestObj));
 
-        await pageObj.goto('https://shop.avira.com/30/purl-in_appsp_2019?cart=215180', { waitUntil: 'networkidle2' } ).catch(errorMsg => {
+        // Open the website
+        const httpResponse = await pageObj.goto(this.xssObj.requestData.checkUrl, { waitUntil: 'networkidle0' } ).catch(errorMsg => {
             console.error(`An error occured during "Page Goto" => ${errorMsg}`)
-                    throw new Error(`An error occured during "Page object create" => ${errorMsg}`);
         });
-        const navPerfObj = await pageObj.$('perfObj').catch(errorMsg => {
-            console.error(`An error occured during "Page object create" => ${errorMsg}`);
-                    throw new Error(`An error occured during "Page object create" => ${errorMsg}`);
+        if(!httpResponse) return;
+
+        // Evaluate the page (with or without performance data)
+        const perfElementHandler = await pageObj.$('pageData').catch(errorMsg => {
+            console.error(`An error occured during "Performance Element Handling" => ${errorMsg}`);
         });
-        if(typeof navPerfObj !== 'object') return;
-        const perfJson = await pageObj.evaluate(perfObj => {
+        if(typeof perfElementHandler !== 'object') return;
+        const perfJson = await pageObj.evaluate(pageData => {
             return JSON.stringify(performance.getEntriesByType('navigation'));
-        }, navPerfObj).catch(errorMsg => {
+        }, perfElementHandler).catch(errorMsg => {
             console.error(`An error occured "Page evaluation" => ${errorMsg}`)
-                    throw new Error(`An error occured during "Page object create" => ${errorMsg}`);
         });
+        if(perfJson) {
+            let perfData = this.processPerformanceData(perfJson);
+            if(this.configObj.perfMode) {
+                this.xssObj.performanceData = perfData;
+            }
+            this.xssObj.responseData.requestTime = perfData.totalDurTime;
+        }
 
-        return perfJson;
+        // Finalize response data
+        this.xssObj.requestData.queryString = this.xssObj.requestData.queryString.substr(1);
+        this.xssObj.responseData.statusCode = httpResponse.status();
+        this.xssObj.responseData.statusMsg = httpResponse.statusText();
+    }
 
+    private async modifyRequest(requestObj: Puppeteer.Request) {
+        if(this.xssObj.requestData.reqMethod === 'POST') {
+            this.requestData.method = this.xssObj.requestData.reqMethod;
+            this.requestData.postData = this.xssObj.requestData.queryString;
+            this.requestData.headers = {
+                ...requestObj.headers(),
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        }
+        else {
+            this.requestData.method = this.xssObj.requestData.reqMethod;
+            this.requestData.url = `${this.xssObj.requestData.checkUrl}${this.xssObj.requestData.queryString}`;
+        }
     }
 
     private async checkBlocklist(requestObj: Puppeteer.Request) {
+        let continueData = this.requestData as Object;
+        this.requestData = {};
+
         const isBlocklisted = (blockListItem: string) => {
             let regEx = new RegExp(blockListItem, 'g');
             return requestObj.url().match(regEx);
         };
         if(this.configObj.resBlockList.some(isBlocklisted)) {
+            const errorObj: ErrorCode = 'blockedbyclient';
             if(this.configObj.debugMode) {
                 console.log(`${requestObj.url()} is blocklisted. Not loading resource.`);
             }
             this.xssObj.blockedUrls.push(requestObj.url());
-            await requestObj.abort().catch(errorMsg => {
-                console.error(`An error occured while aborting request for ${requestObj.url()}: ${errorMsg}`);
-                throw new Error(`Unable to abort network request: ${errorMsg}`);
-            });
+            await requestObj.abort(errorObj);
         }
         else {
-            await requestObj.continue().catch(errorMsg => {
-                console.error(`An error occured while continuing request for ${requestObj.url()}: ${errorMsg}`);
-                throw new Error(`Unable to perform network request: ${errorMsg}`);
+            if(continueData !== null) {
+                await requestObj.continue(continueData).catch(errorMsg => {
+                    console.error(`Unable to continue on ${requestObj.url()}: ${errorMsg}`);
+                });
+            }
+            else {
+                await requestObj.continue().catch(errorMsg => {
+                    console.error(`Unable to continue on ${requestObj.url()}: ${errorMsg}`);
+                });
+            }
+        }
+    }
+
+    private async eventTriggered(eventObj: Puppeteer.ConsoleMessage | Puppeteer.Dialog) {
+        let eventMsg: string = null;
+        let eventType: string = null;
+        if(this.toolsObj.eventIsDialog(eventObj)) {
+            eventMsg = eventObj.message();
+            eventType = eventObj.type();
+            eventObj.dismiss();
+        }
+        else {
+            eventMsg = eventObj.text();
+            eventType = eventObj.type();
+        }
+        if(eventType === 'error') return;
+
+        if(this.configObj.debugMode) {
+            console.log(`An event has been executed on ${this.xssObj.requestData.checkUrl}`);
+            console.log(`==> EventType: "${eventType}" // EventData: "${eventMsg}"`);
+        }
+        if(eventMsg === this.xssObj.requestData.searchString || this.xssObj.requestData.alertOnAnyEvent === true) {
+            if(this.configObj.debugMode) {
+                console.log(`Possible XSS! The eventMsg matches the search string: "${this.xssObj.requestData.searchString}"`);
+            }
+            this.xssObj.hasXss = true;
+            this.xssObj.xssData.push({eventType: eventType, eventMsg: eventMsg});
+        }
+    }
+
+    private async errorTriggered(requestObj: Puppeteer.Request) {
+        if(this.configObj.debugMode) {
+            console.error(`Unable to load resource URL => ${requestObj.url()}`);
+            console.error(`Request failed with an "${requestObj.failure().errorText}" error`)
+            if(requestObj.response()) {
+                console.error(`Resulting status: ${requestObj.response().status()} ${requestObj.response().statusText()}`);
+            }
+            
+        }
+        if(this.configObj.returnErrors) {
+            this.xssObj.resourceErrors.push({
+                url: requestObj.url(),
+                errorCode: requestObj.failure().errorText,
+                statusCode: requestObj.response() ? requestObj.response().status() : null,
+                statusText: requestObj.response() ? requestObj.response().statusText() : null,
             });
         }
     }
+
+    private processPerformanceData(perfJson: string) {
+        let perfData = Object.assign({});
+        let perfEntries = JSON.parse(perfJson);
+        if(perfEntries !== null && perfEntries[0]) {
+            let perfEntry = perfEntries[0] as PerformanceNavigationTiming;
+            perfData.totalDurTime = perfEntry.duration;
+            perfData.dnsTime = (perfEntry.domainLookupEnd - perfEntry.domainLookupStart);
+            perfData.connectTime =(perfEntry.connectEnd - perfEntry.connectStart);
+            perfData.ttfbTime = (perfEntry.responseStart - perfEntry.requestStart);
+            perfData.downloadTime = (perfEntry.responseEnd - perfEntry.responseStart);
+            perfData.domIntTime = (perfEntry.domInteractive - perfEntry.responseEnd);
+            perfData.domContentTime = (perfEntry.domContentLoadedEventEnd - perfEntry.domContentLoadedEventStart);
+            perfData.domCompleteTime = (perfEntry.domComplete - perfEntry.domContentLoadedEventEnd);
+        }
+
+        return perfData;
+    }
+
 }
