@@ -20,7 +20,7 @@ const expressObj = Express()
 const httpServer = httpObj.createServer(expressObj);
 
 // Some constant variables
-const versionNum: string = '1.0.0';
+const versionNum: string = '1.0.0b';
 
 // Express exception handlers
 httpServer.on('error', (errMsg) => {

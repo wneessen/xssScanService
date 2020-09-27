@@ -93,7 +93,7 @@ In case the page seems clean, the response can look like this:
   ],
   "checkTime": "2020-09-16T07:56:17.166Z",
   "responseData": {
-    "requestTime": 390,
+    "requestTime": 390.0124124,
     "statusMsg": "success",
     "statusCode": 200
   },
@@ -103,6 +103,16 @@ In case the page seems clean, the response can look like this:
     "queryString": "badparam=/test\\\"};alert(1234);/*",
     "reqMethod": "GET",
     "searchString": "1234"
+  },
+  "performanceData": {
+    "totalDurTime": 191.53500001993962,
+    "dnsTime": 0,
+    "connectTime": 0,
+    "ttfbTime": 30.86500000790693,
+    "downloadTime": 1.3049999834038317,
+    "domIntTime": 156.55000001424924,
+    "domContentTime": 0,
+    "domCompleteTime": 0.0850000069476664
   },
   "hasXss": false,
   "xssData": [],
@@ -117,6 +127,7 @@ In case the page seems clean, the response can look like this:
 - ```requestData (RequestData)```: Returns a ```RequestData``` object.
 - ```responeData (ResponeData)```: Returns a ```ResponeData``` object.
 - ```resourceErrors (Array<ResourceError>)```: Returns an array of ```ResourceError``` objects for each resource that could not be loaded.
+- ```performanceData (PerformanceData)```: Returns a ```PerformanceData``` object.
 - ```xssData (Array<EventData>)```: Returns an array of ```EventData``` objects for any event that fired.
 
 ### Response JSON sub-objects
@@ -135,18 +146,32 @@ In case the page seems clean, the response can look like this:
   - ```statusCode (number)```: Returns the HTTP status code
   - ```errorMsg (string)```: Returns an error message when a request failed (if a reason is available)
 - ```ResourceError (object)```: Returns an object that consists of the following objects:
-  - ```errorCode (number)```: Returns an [error code](https://doc.qt.io/archives/qt-4.8/qnetworkreply.html#NetworkError-enum)
-  - ```errorString (string)```: Returns a descriptive string for the error
+  - ```errorCode (string)```: Returns an [error code](https://pptr.dev/#?product=Puppeteer&version=v5.3.1&show=api-httprequestaborterrorcode)
+  - ```statusCode (number)```: Returns the HTTP status code
+  - ```statusText (string)```: Returns the HTTP status text
   - ```url (string)```: Returns the URL that caused the error
+- ```PerformanceData (object)```: Returns an object that consists of the following objects:
+  - ```totalDurTime (number)```: Returns the time in ms for loading/evaluating the complete website
+  - ```dnsTime (number)```: Returns the time in ms for the DNS lookup
+  - ```connectTime (number)```: Returns the time in ms for the web request connection
+  - ```ttfbTime (number)```: Returns the time in ms until it took to reach the first byte served
+  - ```downloadTime (number)```: Returns the time in ms it took to download the document
+  - ```domIntTime (number)```: Returns the time in ms it took to fire the DOM interactive event
+  - ```domContentTime (number)```: Returns the time in ms it took to fire the DOM ContentLoaded event
+  - ```domCompleteTime (number)```: Returns the time in ms it took to fire the DOM Complete event
 
 ## CLI Options
 The server provides the following CLI parameters to override defaults
 
-- ```-b <comma-separated list of domains>```: Add additional blocklist domains
-- ```-l <IP address or hostname>```: The IP/hostname for the server to listen on (Default: 127.0.0.1)
-- ```-p <Port>```: The port for the server to listen on (Default: 8099)
-- ```-d```: Enable DEBUG mode (more logging)
-- ```-h```: Show usage
+- ```-b, --block <domains>```: Add additional blocklist domain (can be used multiple times)
+- ```-l, --listen <IP address or hostname>```: The IP/hostname for the server to listen on (Default: 127.0.0.1)
+- ```-p, --port <Port>```: The port for the server to listen on (Default: 8099)
+- ```-t, --timeout <timeout in seconds>```: Amount of seconds until the webservice times out
+- ```-t, --timeout <timeout in seconds>```: Amount of seconds until the webservice times out
+- ```-c, --cache```: Enable caching of websites
+- ```-d, --debug```: Enable DEBUG mode (more logging)
+- ```--returnerrors```: If set, the response object will return resource errors
+- ```--perf```: If set, the response object will return performance data
 
 ## Startup script
 The service comes with a startup script in the ```./bin```-directory called ```startProdServer.sh```
@@ -168,8 +193,8 @@ In the ```./systemd```-directory you find an example service-file to use for you
 
 Copy the file to your systemd-services-directory and run ```sudo systemctl daemon-reload``` to update your systemd-services
 
-To enable the service run: ```systemctl enable xss-check-server```
-To start the service run: ```systemctl start xss-check-server```
+To enable the service run: ```systemctl enable xss-scan-service```
+To start the service run: ```systemctl start xss-scan-service```
 
 
 ## License
