@@ -3,7 +3,7 @@ This is the 2nd generation of the [xssCheckServer](https://github.com/wneessen/x
 
 xssScanService is a webservice that takes URLs and querystring, so that it download and evaluate the returned webpage and searche for typical XSS-events like ```alert()```, ```prompt()```, ```console.log()``` or ```confirm()```. If such event occurs on the given website, the message that is triggered by the event will be compared to a provided search string and marked as "possible XSS", in case it matches.
 
-Different to typical XSS tools, the aim of this tool is to find XSS vulnerabilities in dynamic code of webpages (JavaScript, Images, external resources). Usual XSS tools submit their XSS-identification strings via the query parameters and check the resulting HTML for the same string. As the xssScanService uses phantomJS, it is able to evaluate the result of the webpage as if it would have been opened in a normal browser, including the evaluation of the DOM, JavaScript resources, images and 3rd party scripts.
+Different to typical XSS tools, the aim of this tool is to find XSS vulnerabilities in dynamic code of webpages (JavaScript, Images, external resources). Usual XSS tools submit their XSS-identification strings via the query parameters and check the resulting HTML for the same string. As the xssScanService uses Google Puppeteer, it is able to evaluate the result of the webpage in a "real" (even though headless) browser environment, including the evaluation of the DOM, JavaScript resources, images and 3rd party scripts. This makes it useful to find cases, in which your website is perfectly secure, but because you are loading a vulnerable 3rd party script, your page becomes vulnerable as well.
 
 ## Requirements
 This service requires some NodeJS and some modules to work:
@@ -11,6 +11,8 @@ This service requires some NodeJS and some modules to work:
 - [ExpressJS](https://expressjs.com/)
 - [Google Puppeteer](https://pptr.dev/)
 - [Arg](https://www.npmjs.com/package/arg)
+
+The modules should be automagically be installed by running: ```npm install```
 
 ## Features
 - TypeScripted source for ease of extension
