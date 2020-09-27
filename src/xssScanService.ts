@@ -1,8 +1,9 @@
 // xssScanService - A browser based XSS-scanning/detection engine
 // (C) 2020 by Winni Neessen <wn@neessen.net>
 import Express from 'express';
-import * as httpsObj from 'https';
+//import * as httpsObj from 'https';
 import * as httpObj from 'http';
+import * as netObj from 'net';
 import Puppeteer from 'puppeteer';
 import XssScanner from './lib/xssScanner';
 import arg from 'arg';
@@ -20,21 +21,19 @@ const expressObj = Express()
 const httpServer = httpObj.createServer(expressObj);
 
 // Some constant variables
-const versionNum: string = '1.0.0b';
+const versionNum: string = '1.1.0';
 
 // Express exception handlers
-httpServer.on('error', (errMsg) => {
+httpServer.on('error', errMsg => {
     console.error(`Unable to start webservice: ${errMsg}`);
     process.exit(1);
 });
-
-// Default blocklist
 
 // Default variables
 const configObj: IXssScanConfig = {
     listenHost: 'localhost',
     listenPort: 8099,
-    reqTimeout: 3,
+    reqTimeout: 5000,
     debugMode: false,
     perfMode: false,
     webSecEnable: false,
@@ -43,6 +42,7 @@ const configObj: IXssScanConfig = {
         'googletagmanager.com', 'google-analytics.com', 'optimizely.com', '.amazon-adsystem.com',
         'device-metrics-us.amazon.com', 'crashlytics.com', 'doubleclick.net'
     ],
+    resErrorIgnoreCodes: [ 'net::ERR_BLOCKED_BY_CLIENT.Inspector' ],
     allowCache: false,
     userAgent: `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 xssScanService/${versionNum}`
 };
@@ -102,6 +102,25 @@ async function startServer() {
     });
     const browserCtx = await browserObj.createIncognitoBrowserContext();
     const xssObj = new XssScanner(browserObj, browserCtx, configObj);
+    httpServer.on('timeout', socketObj => {
+        if(configObj.debugMode) {
+            console.error(`Request for ${xssObj.xssObj.requestData.checkUrl} timed out`);
+        }
+        let xssResponse = xssObj.xssObj;
+        xssResponse.responseData.errorMsg = `Request timed out after ${configObj.reqTimeout} seconds`;
+        xssResponse.responseData.statusCode = 408;
+        xssResponse.responseData.statusMsg = 'Request Timeout';
+        let xssJson = JSON.stringify(xssResponse);
+
+        socketObj.write('HTTP/1.1 408 Request Timeout\n');
+        socketObj.write('Content-Type: application/json; charset=utf-8\n');
+        socketObj.write(`Content-Length: ${xssJson.length + 1}` + '\n');
+        socketObj.write(`Date: ${(new Date).toUTCString()}` + '\n');
+        socketObj.write('Connection: keep-alive\n');
+        socketObj.write('\n');
+        socketObj.write(xssJson + '\n');
+        socketObj.destroy();
+    })
 
     // Routes
     expressObj.post('/check', (reqObj, resObj) => xssObj.processRequest(reqObj, resObj));

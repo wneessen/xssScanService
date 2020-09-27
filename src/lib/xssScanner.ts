@@ -1,8 +1,7 @@
 import Express from 'express';
 import Puppeteer, { ErrorCode } from 'puppeteer';
 import XssTools from './xssTools';
-import { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData } from './xssInterfaces';
-import { textChangeRangeIsUnchanged } from 'typescript';
+import { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData, IPerformanceData } from './xssInterfaces';
 
 export default class XssScanner {
     private browserObj: Puppeteer.Browser;
@@ -10,7 +9,7 @@ export default class XssScanner {
     private configObj: IXssScanConfig;
     private xssReqData: IXssReqObj = null;
     private xssResData: IXssResObj = null;
-    private xssObj: IXssObj = null;
+    public xssObj: IXssObj = null;
     private requestData: IRequestData = {};
     private benchMark: number = null;
     private toolsObj: XssTools = new XssTools();
@@ -98,7 +97,7 @@ export default class XssScanner {
         else {
             await this.processPage();
             if(this.configObj.debugMode) {
-                console.debug(`Request completed in ${(this.xssObj.responseData.requestTime / 1000).toFixed(3)} sec`);
+                console.debug(`Request to ${this.xssObj.requestData.checkUrl} completed in ${(this.xssObj.responseData.requestTime / 1000).toFixed(3)} sec`);
             }
             return resObj.json(this.xssObj);
         }
@@ -111,11 +110,12 @@ export default class XssScanner {
      * @returns {Promise<void>}
      * @memberof XssScanner
     */
-    private async processPage() {
+    private async processPage(): Promise<void> {
         // Initialize Webbrowser page object
         const pageObj = this.configObj.allowCache === true ? await this.browserObj.newPage() : await this.browserCtx.newPage();
         await pageObj.setUserAgent(this.configObj.userAgent).catch();
         await pageObj.setRequestInterception(true);
+        await pageObj.setDefaultTimeout(this.configObj.reqTimeout * 1000);
         
         // Event handler
         pageObj.once('request', requestObj => this.modifyRequest(requestObj));         
@@ -154,7 +154,15 @@ export default class XssScanner {
         this.xssObj.responseData.statusMsg = httpResponse.statusText();
     }
 
-    private async modifyRequest(requestObj: Puppeteer.Request) {
+    /**
+     * Modify the request before processing
+     * This is especially important to perform POST requests
+     *
+     * @param {Puppeteer.Request} requestObj The Puppeteer request object
+     * @returns {Promise<void>}
+     * @memberof XssScanner
+    */
+    private async modifyRequest(requestObj: Puppeteer.Request): Promise<void> {
         if(this.xssObj.requestData.reqMethod === 'POST') {
             this.requestData.method = this.xssObj.requestData.reqMethod;
             this.requestData.postData = this.xssObj.requestData.queryString;
@@ -169,7 +177,14 @@ export default class XssScanner {
         }
     }
 
-    private async checkBlocklist(requestObj: Puppeteer.Request) {
+    /**
+     * Check if a resource is on the blocklist and abort the call accordingly
+     *
+     * @param {Puppeteer.Request} requestObj The Puppeteer request object
+     * @returns {Promise<void>}
+     * @memberof XssScanner
+    */
+    private async checkBlocklist(requestObj: Puppeteer.Request): Promise<void> {
         let continueData = this.requestData as Object;
         this.requestData = {};
 
@@ -199,7 +214,14 @@ export default class XssScanner {
         }
     }
 
-    private async eventTriggered(eventObj: Puppeteer.ConsoleMessage | Puppeteer.Dialog) {
+    /**
+     * Eventhandler for when an event in the website fired
+     *
+     * @param {Puppeteer.ConsoleMessage|Puppeteer.Dialog} eventObj The Puppeteer event object
+     * @returns {Promise<void>}
+     * @memberof XssScanner
+    */
+    private async eventTriggered(eventObj: Puppeteer.ConsoleMessage | Puppeteer.Dialog): Promise<void> {
         let eventMsg: string = null;
         let eventType: string = null;
         if(this.toolsObj.eventIsDialog(eventObj)) {
@@ -226,7 +248,14 @@ export default class XssScanner {
         }
     }
 
-    private async errorTriggered(requestObj: Puppeteer.Request) {
+    /**
+     * Eventhandler for when an error in the website fired
+     *
+     * @param {Puppeteer.Request} requestObj The Puppeteer request object
+     * @returns {Promise<void>}
+     * @memberof XssScanner
+    */
+    private async errorTriggered(requestObj: Puppeteer.Request): Promise<void> {
         if(this.configObj.debugMode) {
             console.error(`Unable to load resource URL => ${requestObj.url()}`);
             console.error(`Request failed with an "${requestObj.failure().errorText}" error`)
@@ -235,7 +264,7 @@ export default class XssScanner {
             }
             
         }
-        if(this.configObj.returnErrors) {
+        if(this.configObj.returnErrors && this.configObj.resErrorIgnoreCodes.indexOf(requestObj.failure().errorText) === -1) {
             this.xssObj.resourceErrors.push({
                 url: requestObj.url(),
                 errorCode: requestObj.failure().errorText,
@@ -245,7 +274,14 @@ export default class XssScanner {
         }
     }
 
-    private processPerformanceData(perfJson: string) {
+    /**
+     * Process the performance data into usable format
+     *
+     * @param {string} perfJson Stringified JSON data of the Performance object
+     * @returns {IPerformanceData}
+     * @memberof XssScanner
+    */
+    private processPerformanceData(perfJson: string): IPerformanceData {
         let perfData = Object.assign({});
         let perfEntries = JSON.parse(perfJson);
         if(perfEntries !== null && perfEntries[0]) {

@@ -9,13 +9,14 @@ interface IXssScanConfig {
     userAgent: string;
     allowCache?: boolean;
     resBlockList?: Array<string>;
+    resErrorIgnoreCodes?: Array<string>;
 }
 interface IXssObj {
     checkTime: Date;
     hasXss: boolean;
     requestData: IXssReqObj;
     responseData: IXssResObj;
-    performanceData?: string;
+    performanceData?: IPerformanceData;
     xssData: Array<IXssDataObj>;
     resourceErrors?: Array<IReturnResourceError>;
     blockedUrls?: Array<string>;
@@ -49,5 +50,15 @@ interface IRequestData {
     postData?: string;
     method?: string;
 }
-export { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData };
+interface IPerformanceData {
+    totalDurTime: number;
+    dnsTime: number;
+    connectTime: number;
+    ttfbTime: number;
+    downloadTime: number;
+    domIntTime: number;
+    domContentTime: number;
+    domCompleteTime: number;
+}
+export { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData, IPerformanceData };
 //# sourceMappingURL=xssInterfaces.d.ts.map

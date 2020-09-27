@@ -1,13 +1,13 @@
 import Express from 'express';
 import Puppeteer from 'puppeteer';
-import { IXssScanConfig } from './xssInterfaces';
+import { IXssScanConfig, IXssObj } from './xssInterfaces';
 export default class XssScanner {
     private browserObj;
     private browserCtx;
     private configObj;
     private xssReqData;
     private xssResData;
-    private xssObj;
+    xssObj: IXssObj;
     private requestData;
     private benchMark;
     private toolsObj;

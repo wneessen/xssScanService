@@ -76,7 +76,7 @@ class XssScanner {
         else {
             await this.processPage();
             if (this.configObj.debugMode) {
-                console.debug(`Request completed in ${(this.xssObj.responseData.requestTime / 1000).toFixed(3)} sec`);
+                console.debug(`Request to ${this.xssObj.requestData.checkUrl} completed in ${(this.xssObj.responseData.requestTime / 1000).toFixed(3)} sec`);
             }
             return resObj.json(this.xssObj);
         }
@@ -85,6 +85,7 @@ class XssScanner {
         const pageObj = this.configObj.allowCache === true ? await this.browserObj.newPage() : await this.browserCtx.newPage();
         await pageObj.setUserAgent(this.configObj.userAgent).catch();
         await pageObj.setRequestInterception(true);
+        await pageObj.setDefaultTimeout(this.configObj.reqTimeout * 1000);
         pageObj.once('request', requestObj => this.modifyRequest(requestObj));
         pageObj.on('request', requestObj => this.checkBlocklist(requestObj));
         pageObj.on('console', eventObj => this.eventTriggered(eventObj));
@@ -192,7 +193,7 @@ class XssScanner {
                 console.error(`Resulting status: ${requestObj.response().status()} ${requestObj.response().statusText()}`);
             }
         }
-        if (this.configObj.returnErrors) {
+        if (this.configObj.returnErrors && this.configObj.resErrorIgnoreCodes.indexOf(requestObj.failure().errorText) === -1) {
             this.xssObj.resourceErrors.push({
                 url: requestObj.url(),
                 errorCode: requestObj.failure().errorText,

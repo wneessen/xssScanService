@@ -16,7 +16,8 @@ interface IXssScanConfig {
     webSecEnable: boolean,
     userAgent: string,
     allowCache?: boolean,
-    resBlockList?: Array<string>
+    resBlockList?: Array<string>,
+    resErrorIgnoreCodes?: Array<string>
 }
 
 /**
@@ -29,7 +30,7 @@ interface IXssObj {
     hasXss: boolean,
     requestData: IXssReqObj,
     responseData: IXssResObj,
-    performanceData?: string,
+    performanceData?: IPerformanceData,
     xssData: Array<IXssDataObj>,
     resourceErrors?: Array<IReturnResourceError>,
     blockedUrls?: Array<string>,
@@ -94,6 +95,20 @@ interface IRequestData {
     method?: string,
 }
 
+/**
+ * HTTP performance data
+ *
+ * @interface IPerformanceData
+*/
+interface IPerformanceData {
+    totalDurTime: number,
+    dnsTime: number,
+    connectTime: number,
+    ttfbTime: number,
+    downloadTime: number,
+    domIntTime: number,
+    domContentTime: number,
+    domCompleteTime: number
+}
 
-
-export { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData }
+export { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData, IPerformanceData }
