@@ -183,9 +183,14 @@ The script looks for a local config file ```./bin/prodServer.local.conf``` which
 
 The following parameters can be overwritten:
 ```sh
-PHANTOMJS=<Path to your phantomJS binary>
-LISTENHOST=<IP/hostname to listen on>
-LISTENPORT=<Port to listen on>
+LISTENHOST=10.1.2.3
+LISTENPORT=1234
+BLOCKLIST="domain1.com domain2.com"
+SHOWPERFORMANCE=true
+SHOWERROS=true
+ENABLECACHING=true
+BROWSERPATH=/path/to/chrome
+BROWSERTYPE=chrome
 ```
 
 To start the service you run: ```./bin/startProdServer.sh start```
