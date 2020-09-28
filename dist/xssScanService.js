@@ -34,7 +34,7 @@ process_1.default.on('SIGINT', () => {
 });
 const expressObj = express_1.default();
 const httpServer = httpObj.createServer(expressObj);
-const versionNum = '1.3.2-dev';
+const versionNum = '1.4.0';
 httpServer.on('error', errMsg => {
     console.error(`Unable to start webservice: ${errMsg}`);
     process_1.default.exit(1);
@@ -69,13 +69,14 @@ try {
         '--perf': Boolean,
         '--cache': Boolean,
         '--help': Boolean,
-        '--returnerrors': Boolean,
-        '--ignoresslerrors': Boolean,
+        '--return-errors': Boolean,
+        '--ignore-ssl-errors': Boolean,
         '--block': [String],
         '--browserpath': String,
         '--browsertype': String,
-        '--noheadless': Boolean,
-        '--nosandbox': Boolean,
+        '--no-headless': Boolean,
+        '--no-sandbox': Boolean,
+        '--no-listen-localhost': Boolean,
         '-l': '--listen',
         '-p': '--port',
         '-t': '--timeout',
@@ -83,7 +84,7 @@ try {
         '-c': '--cache',
         '-d': '--debug',
         '-h': '--help',
-        '-s': '--ignoresslerrors'
+        '-s': '--ignore-ssl-errors'
     }, { argv: process_1.default.argv.slice(2) });
 }
 catch (errorObj) {
@@ -120,20 +121,24 @@ if (typeof cliArgs["--cache"] !== 'undefined') {
     configObj.allowCache = true;
 }
 ;
-if (typeof cliArgs["--returnerrors"] !== 'undefined') {
+if (typeof cliArgs["--return-errors"] !== 'undefined') {
     configObj.returnErrors = true;
 }
 ;
-if (typeof cliArgs["--ignoresslerrors"] !== 'undefined') {
+if (typeof cliArgs["--ignore-ssl-errors"] !== 'undefined') {
     pupLaunchOptions.ignoreHTTPSErrors = true;
 }
 ;
-if (typeof cliArgs["--noheadless"] !== 'undefined') {
+if (typeof cliArgs["--no-headless"] !== 'undefined') {
     pupLaunchOptions.headless = false;
 }
 ;
-if (typeof cliArgs["--nosandbox"] !== 'undefined') {
+if (typeof cliArgs["--no-sandbox"] !== 'undefined') {
     pupLaunchOptions.args.push('--no-sandbox');
+}
+;
+if (typeof cliArgs["--no-listen-localhost"] !== 'undefined') {
+    configObj.listenHost = null;
 }
 ;
 if (typeof cliArgs["--browserpath"] !== 'undefined') {
@@ -196,9 +201,16 @@ async function startServer() {
         errObj.responseData.errorMsg = 'Missing or invalid request parameters';
         return resObj.status(400).json(errObj);
     });
-    httpServer.listen(configObj.listenPort, configObj.listenHost, () => {
-        console.log(`Server accepting requests on ${configObj.listenHost}:${configObj.listenPort}`);
-    });
+    if (configObj.listenHost === null) {
+        httpServer.listen(configObj.listenPort, () => {
+            console.log(`Server accepting requests on *:${configObj.listenPort}`);
+        });
+    }
+    else {
+        httpServer.listen(configObj.listenPort, configObj.listenHost, () => {
+            console.log(`Server accepting requests on ${configObj.listenHost}:${configObj.listenPort}`);
+        });
+    }
 }
 function showHelp() {
     console.log(`xssScanService v${versionNum}`);
@@ -209,9 +221,11 @@ function showHelp() {
     console.log('  -t, --timeout <seconds>\t\tAmount of seconds until the request times out');
     console.log('  -c, --cache\t\t\t\tEnable caching of websites');
     console.log('  -s, --ignoresslerrors\t\t\tIgnore HTTPS errors');
-    console.log('  --returnerrors\t\t\tIf set, the response object will return resource errors');
+    console.log('  --retur-nerrors\t\t\tIf set, the response object will return resource errors');
     console.log('  --perf\t\t\t\tIf set, the response object will return performance date');
-    console.log('  --noheadless\t\t\t\tIf set, the browser will start in non-headless mode');
+    console.log('  --no-headless\t\t\t\tIf set, the browser will start in non-headless mode');
+    console.log('  --no-listen-localhost\t\t\tIf set, the webservice will not be bound to localhost');
+    console.log('  --no-sandbox\t\t\t\tIf set, the browser is started in no-sandbox mode (DANGER: Only use if you are sure what you are doing)');
     console.log('  --browserpath <path>\t\t\tPath to browser executable (Using Firefox requires --browsertype firefox)');
     console.log('  --browsertype <firefox|chrome>\tType of browser to use (Requires --browserpath to be set)');
     console.log('  -d, --debug\t\t\t\tEnable DEBUG mode');

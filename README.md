@@ -28,6 +28,34 @@ Once started, the server will (by default) listen on http://localhost:8099 and w
 
 The server will now fetch and evaluate the website. On any alert(), console.log(), prompt() or confirm() event, the server will compare the received message against the ```searchfor``` parameter.
 
+## Installation
+
+### Local installation via NPM
+Simply download the sources via:
+```sh
+$ git clone git@github.com:wneessen/xssScanService.git
+```
+After successful cloning, switch to the newly created directory and run:
+```sh
+$ npm install
+```
+After the installation completed you are ready to run
+
+### Docker image
+There is a [Docker image](https://hub.docker.com/r/wneessen/xss-scan-service) for xssScanService available on DockerHub.
+
+**Important note: Due to the architecture of Docker, the service has to run the Chromium browser in "[no-sandbox](https://chromium.googlesource.com/chromium/src/+/master/docs/design/sandbox.md)" mode. Yes, Docker is sandboxing as well, but I cannot guarantee, that the same security environment will be given, as if you are running locally without Docker (with Chromiums sandbox-mode enabled). Therefore please make sure to use the Docker image at your own risk.**
+
+To run the Docker image simply issue the following command:
+```sh
+$ sudo docker pull wneessen/xss-scan-service:latest
+```
+Once the download finished, you can start the service by running:
+```sh
+$ docker run -p 8099:8099 wneessen/xss-scan-service:latest
+```
+
+## API
 ### Supported POST parameters
 The following POST request parameters are supported:
 
@@ -170,13 +198,16 @@ The server provides the following CLI parameters to override defaults
 - ```-p, --port <Port>```: The port for the server to listen on (Default: 8099)
 - ```-t, --timeout <timeout in seconds>```: Amount of seconds until the webservice times out
 - ```-c, --cache```: Enable caching of websites
-- ```-s, --ignoresslerrors```: Ignore HTTPS errors
+- ```-s, --ignore-ssl-errors```: Ignore HTTPS errors
 - ```-d, --debug```: Enable DEBUG mode (more logging)
-- ```--returnerrors```: If set, the response object will return resource errors
+- ```--return-errors```: If set, the response object will return resource errors
 - ```--perf```: If set, the response object will return performance data
-- ```--noheadless```: If set, the browser will start in non-headless mode
+- ```--no-headless```: If set, the browser will start in non-headless mode
+- ```--no-listen-localhost```: If set, the webservice is not bound to localhost
+- ```--no-sandbox```: If set, the browser is started in no-sandbox mode (**DANGEROUS**: Only use if you are sure what you are doing)
 - ```--browserpath <path to browser executabel>```: Run Puppeteer with a different browser (Chrome/Firefox supported)
 - ```--browsertype <chrome|firefox>```: Run Puppeteer with a different browser type (Requires: --browserpath to be set)
+
 
 ## Startup script
 The service comes with a startup script in the ```./bin```-directory called ```startProdServer.sh```

@@ -39,7 +39,7 @@ if [ "x${LISTENHOST}" != "x" ]; then
 fi
 
 if [ "x${SHOWERRORS}" = "xtrue" ]; then
-    STARTPARMS="${STARTPARMS} --returnerrors"
+    STARTPARMS="${STARTPARMS} --return-errors"
 fi
 
 if [ "x${SHOWPERFORMANCE}" = "xtrue" ]; then
