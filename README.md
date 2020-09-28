@@ -1,3 +1,4 @@
+![Docker Image CI](https://github.com/wneessen/xssScanService/workflows/Docker%20Image%20CI/badge.svg) ![SL Scan](https://github.com/wneessen/xssScanService/workflows/SL%20Scan/badge.svg) ![CodeQL](https://github.com/wneessen/xssScanService/workflows/CodeQL/badge.svg)
 # xssScanService
 This is the 2nd generation of the [xssCheckServer](https://github.com/wneessen/xssCheckServer). While xssCheckServer is based on the deprecated PhantomJS processor, xssScanService is NodeJS based and makes use of [ExpressJS](https://expressjs.com/) and Google's [Puppeteer Framework](https://pptr.dev/). The syntax and output of xssScanService is mostly compatible to xssCheckServer.
 
