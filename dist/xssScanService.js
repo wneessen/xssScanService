@@ -34,13 +34,13 @@ process_1.default.on('SIGINT', () => {
 });
 const expressObj = express_1.default();
 const httpServer = httpObj.createServer(expressObj);
-const versionNum = '1.3.1';
+const versionNum = '1.3.1-dev';
 httpServer.on('error', errMsg => {
     console.error(`Unable to start webservice: ${errMsg}`);
     process_1.default.exit(1);
 });
 const configObj = {
-    listenHost: 'localhost',
+    listenHost: null,
     listenPort: 8099,
     reqTimeout: 5000,
     debugMode: false,
@@ -191,9 +191,16 @@ async function startServer() {
         errObj.responseData.errorMsg = 'Missing or invalid request parameters';
         return resObj.status(400).json(errObj);
     });
-    httpServer.listen(configObj.listenPort, configObj.listenHost, () => {
-        console.log(`Server accepting requests on ${configObj.listenHost}:${configObj.listenPort}`);
-    });
+    if (configObj.listenHost !== null) {
+        httpServer.listen(configObj.listenPort, configObj.listenHost, () => {
+            console.log(`Server accepting requests on ${configObj.listenHost}:${configObj.listenPort}`);
+        });
+    }
+    else {
+        httpServer.listen(configObj.listenPort, () => {
+            console.log(`Server accepting requests on port ${configObj.listenPort}`);
+        });
+    }
 }
 function showHelp() {
     console.log(`xssScanService v${versionNum}`);

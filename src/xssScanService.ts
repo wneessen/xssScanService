@@ -20,7 +20,7 @@ const expressObj = Express();
 const httpServer = httpObj.createServer(expressObj);
 
 // Some constant variables
-const versionNum: string = '1.3.1';
+const versionNum: string = '1.3.1-dev';
 
 // Express exception handlers
 httpServer.on('error', errMsg => {
@@ -30,7 +30,7 @@ httpServer.on('error', errMsg => {
 
 // Default variables
 const configObj: IXssScanConfig = {
-    listenHost: 'localhost',
+    listenHost: null,
     listenPort: 8099,
     reqTimeout: 5000,
     debugMode: false,
@@ -167,9 +167,16 @@ async function startServer() {
     });
 
     // Start server
-    httpServer.listen(configObj.listenPort, configObj.listenHost, () => {
-        console.log(`Server accepting requests on ${configObj.listenHost}:${configObj.listenPort}`);
-    });
+    if(configObj.listenHost !== null) {
+        httpServer.listen(configObj.listenPort, configObj.listenHost, () => {
+            console.log(`Server accepting requests on ${configObj.listenHost}:${configObj.listenPort}`);
+        });
+    }
+    else {
+        httpServer.listen(configObj.listenPort, () => {
+            console.log(`Server accepting requests on port ${configObj.listenPort}`);
+        });
+    }
 }
 
 function showHelp() {
