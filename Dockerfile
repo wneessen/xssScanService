@@ -3,8 +3,7 @@
 FROM        archlinux
 LABEL       maintainer="wn@neessen.net"
 RUN         pacman -Syu --noconfirm --noprogressbar
-RUN         pacman --asdeps --noconfirm --noprogressbar npm
-RUN         pacman -S --noconfirm --noprogressbar nodejs
+RUN         pacman -S --noconfirm --noprogressbar npm nodejs
 RUN         /usr/bin/groupadd -r xssscanservice && /usr/bin/useradd -r -g xssscanservice -c "xssScanService user" -m -s /bin/bash -d /opt/xssScanService xssscanservice
 COPY        . /opt/xssScanService
 RUN         chown -R xssscanservice:xssscanservice /opt/xssScanService
