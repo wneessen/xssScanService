@@ -12,6 +12,7 @@ interface IXssScanConfig {
     resErrorIgnoreCodes?: Array<string>;
 }
 interface IXssObj {
+    requestId: string;
     checkTime: Date;
     hasXss: boolean;
     requestData: IXssReqObj;

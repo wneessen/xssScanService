@@ -26,6 +26,7 @@ interface IXssScanConfig {
  * @interface IXssObj
 */
 interface IXssObj {
+    requestId: string
     checkTime: Date,
     hasXss: boolean,
     requestData: IXssReqObj,

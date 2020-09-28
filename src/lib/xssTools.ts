@@ -1,4 +1,5 @@
 import Puppeteer from 'puppeteer';
+import * as cryptoObj from 'crypto';
 
 export default class XssTools {
     /**
@@ -10,5 +11,20 @@ export default class XssTools {
     */
     public eventIsDialog(inputEvent: any): inputEvent is Puppeteer.Dialog {
         return (inputEvent as Puppeteer.Dialog).dismiss !== undefined;
+    }
+
+    /**
+     * Generate a SHA checksum
+     *
+     * @param {string} shaAlgo The SHA algorithm to use (sha1, sha256, sha512, etc.)
+     * @param {string} inputString The data as array buffer
+     * @returns {string} Hex representation of the SHA checksum
+     * @memberof XssTools
+    */
+    public shaDigest(shaAlgo: string, inputString: string): string {
+        const hashObj = cryptoObj.createHash(shaAlgo);
+        hashObj.update(inputString);
+
+        return hashObj.digest('hex');
     }
 }

@@ -34,7 +34,7 @@ process_1.default.on('SIGINT', () => {
 });
 const expressObj = express_1.default();
 const httpServer = httpObj.createServer(expressObj);
-const versionNum = '1.3.0';
+const versionNum = '1.3.1';
 httpServer.on('error', errMsg => {
     console.error(`Unable to start webservice: ${errMsg}`);
     process_1.default.exit(1);

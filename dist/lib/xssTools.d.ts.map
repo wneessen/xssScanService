@@ -1,1 +1,1 @@
-{"version":3,"file":"xssTools.d.ts","sourceRoot":"","sources":["../../src/lib/xssTools.ts"],"names":[],"mappings":"AAAA,OAAO,SAAS,MAAM,WAAW,CAAC;AAElC,MAAM,CAAC,OAAO,OAAO,QAAQ;IAQlB,aAAa,CAAC,UAAU,EAAE,GAAG,GAAG,UAAU,IAAI,SAAS,CAAC,MAAM;CAGxE"}
+{"version":3,"file":"xssTools.d.ts","sourceRoot":"","sources":["../../src/lib/xssTools.ts"],"names":[],"mappings":"AAAA,OAAO,SAAS,MAAM,WAAW,CAAC;AAGlC,MAAM,CAAC,OAAO,OAAO,QAAQ;IAQlB,aAAa,CAAC,UAAU,EAAE,GAAG,GAAG,UAAU,IAAI,SAAS,CAAC,MAAM;IAY9D,SAAS,CAAC,OAAO,EAAE,MAAM,EAAE,WAAW,EAAE,MAAM,GAAG,MAAM;CAMjE"}

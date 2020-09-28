@@ -56,7 +56,8 @@ export default class XssScanner {
             requestData: this.xssReqData,
             hasXss: false,
             xssData: [],
-            resourceErrors: []
+            resourceErrors: [],
+            requestId: null,
         };
         if(this.configObj.debugMode) {
             console.log('Received new HTTP request');
@@ -103,6 +104,7 @@ export default class XssScanner {
             return resObj.status(400).json(this.xssObj);
         }
         else {
+            this.xssObj.requestId = this.toolsObj.shaDigest('sha1', `${Date.now()}${this.xssObj.requestData.checkUrl}${this.xssObj.requestData.queryString}`);
             await this.processPage();
             if(this.configObj.debugMode) {
                 console.debug(`Request to ${this.xssObj.requestData.checkUrl} completed in ${(this.xssObj.responseData.requestTime / 1000).toFixed(3)} sec`);
