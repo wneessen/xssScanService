@@ -21,7 +21,7 @@ const expressObj = Express()
 const httpServer = httpObj.createServer(expressObj);
 
 // Some constant variables
-const versionNum: string = '1.2.0';
+const versionNum: string = '1.2.2';
 
 // Express exception handlers
 httpServer.on('error', errMsg => {
@@ -68,6 +68,7 @@ try {
         '--block': [String],
         '--browserpath': String,
         '--browsertype': String,
+        '--noheadless': Boolean,
 
         // Aliases
         '-l': '--listen',
@@ -97,6 +98,7 @@ if(typeof cliArgs["--perf"] !== 'undefined') { configObj.perfMode = true; };
 if(typeof cliArgs["--cache"] !== 'undefined') { configObj.allowCache = true };
 if(typeof cliArgs["--returnerrors"] !== 'undefined') { configObj.returnErrors = true };
 if(typeof cliArgs["--ignoresslerrors"] !== 'undefined') { pupLaunchOptions.ignoreHTTPSErrors = true };
+if(typeof cliArgs["--noheadless"] !== 'undefined') { pupLaunchOptions.headless = false; };
 if(typeof cliArgs["--browserpath"] !== 'undefined') { pupLaunchOptions.executablePath = cliArgs["--browserpath"] };
 if(
     typeof cliArgs["--browsertype"] !== 'undefined' && 
@@ -167,6 +169,7 @@ function showHelp() {
     console.log('  -s, --ignoresslerrors\t\t\tIgnore HTTPS errors');
     console.log('  --returnerrors\t\t\tIf set, the response object will return resource errors');
     console.log('  --perf\t\t\t\tIf set, the response object will return performance date');
+    console.log('  --noheadless\t\t\t\tIf set, the browser will start in non-headless mode');
     console.log('  --browserpath <path>\t\t\tPath to browser executable (Using Firefox requires --browsertype firefox)');
     console.log('  --browsertype <firefox|chrome>\tType of browser to use (Requires --browserpath to be set)');
     console.log('  -d, --debug\t\t\t\tEnable DEBUG mode');

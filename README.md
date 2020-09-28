@@ -174,6 +174,7 @@ The server provides the following CLI parameters to override defaults
 - ```-d, --debug```: Enable DEBUG mode (more logging)
 - ```--returnerrors```: If set, the response object will return resource errors
 - ```--perf```: If set, the response object will return performance data
+- ```--noheadless```: If set, the browser will start in non-headless mode
 - ```--browserpath <path to browser executabel>```: Run Puppeteer with a different browser (Chrome/Firefox supported)
 - ```--browsertype <chrome|firefox>```: Run Puppeteer with a different browser type (Requires: --browserpath to be set)
 

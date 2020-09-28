@@ -113,6 +113,7 @@ class XssScanner {
             }
             this.xssObj.responseData.requestTime = perfData.totalDurTime;
         }
+        pageObj.close();
         this.xssObj.requestData.queryString = this.xssObj.requestData.queryString.substr(1);
         this.xssObj.responseData.statusCode = httpResponse.status();
         this.xssObj.responseData.statusMsg = httpResponse.statusText();

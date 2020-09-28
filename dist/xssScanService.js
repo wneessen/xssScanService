@@ -34,7 +34,7 @@ process_1.default.on('SIGINT', () => {
 });
 const expressObj = express_1.default();
 const httpServer = httpObj.createServer(expressObj);
-const versionNum = '1.2.0';
+const versionNum = '1.2.2';
 httpServer.on('error', errMsg => {
     console.error(`Unable to start webservice: ${errMsg}`);
     process_1.default.exit(1);
@@ -74,6 +74,7 @@ try {
         '--block': [String],
         '--browserpath': String,
         '--browsertype': String,
+        '--noheadless': Boolean,
         '-l': '--listen',
         '-p': '--port',
         '-t': '--timeout',
@@ -124,6 +125,10 @@ if (typeof cliArgs["--returnerrors"] !== 'undefined') {
 ;
 if (typeof cliArgs["--ignoresslerrors"] !== 'undefined') {
     pupLaunchOptions.ignoreHTTPSErrors = true;
+}
+;
+if (typeof cliArgs["--noheadless"] !== 'undefined') {
+    pupLaunchOptions.headless = false;
 }
 ;
 if (typeof cliArgs["--browserpath"] !== 'undefined') {
@@ -190,6 +195,7 @@ function showHelp() {
     console.log('  -s, --ignoresslerrors\t\t\tIgnore HTTPS errors');
     console.log('  --returnerrors\t\t\tIf set, the response object will return resource errors');
     console.log('  --perf\t\t\t\tIf set, the response object will return performance date');
+    console.log('  --noheadless\t\t\t\tIf set, the browser will start in non-headless mode');
     console.log('  --browserpath <path>\t\t\tPath to browser executable (Using Firefox requires --browsertype firefox)');
     console.log('  --browsertype <firefox|chrome>\tType of browser to use (Requires --browserpath to be set)');
     console.log('  -d, --debug\t\t\t\tEnable DEBUG mode');

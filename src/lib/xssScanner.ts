@@ -148,6 +148,9 @@ export default class XssScanner {
             this.xssObj.responseData.requestTime = perfData.totalDurTime;
         }
 
+        // Close the page
+        pageObj.close();
+
         // Finalize response data
         this.xssObj.requestData.queryString = this.xssObj.requestData.queryString.substr(1);
         this.xssObj.responseData.statusCode = httpResponse.status();
