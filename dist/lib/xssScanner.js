@@ -16,7 +16,7 @@ class XssScanner {
         this.browserCtx = browserCtx;
         this.configObj = configObj;
     }
-    async processRequest(reqObj, resObj) {
+    async processRequest(reqObj, resObj, nextFunc) {
         reqObj.setTimeout(this.configObj.reqTimeout * 1000);
         const dateObj = new Date();
         this.xssReqData = {
@@ -63,8 +63,16 @@ class XssScanner {
         if (reqObj.body.url) {
             this.xssObj.requestData.checkUrl = reqObj.body.url;
         }
+        else {
+            nextFunc(this.xssObj);
+            return;
+        }
         if (reqObj.body.querystring) {
             this.xssObj.requestData.queryString = reqObj.body.url.includes('?') ? `&${reqObj.body.querystring}` : `?${reqObj.body.querystring}`;
+        }
+        else {
+            nextFunc(this.xssObj);
+            return;
         }
         if ((!this.xssObj.requestData.checkUrl || this.xssObj.requestData.checkUrl === '') ||
             this.xssObj.requestData.reqMethod.match(/_NOT_SUPPORTED$/) ||
@@ -78,7 +86,13 @@ class XssScanner {
             if (this.configObj.debugMode) {
                 console.debug(`Request to ${this.xssObj.requestData.checkUrl} completed in ${(this.xssObj.responseData.requestTime / 1000).toFixed(3)} sec`);
             }
-            return resObj.json(this.xssObj);
+            if (resObj.writableFinished === false) {
+                return resObj.json(this.xssObj);
+            }
+            else {
+                nextFunc();
+                return;
+            }
         }
     }
     async processPage() {

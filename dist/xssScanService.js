@@ -34,7 +34,7 @@ process_1.default.on('SIGINT', () => {
 });
 const expressObj = express_1.default();
 const httpServer = httpObj.createServer(expressObj);
-const versionNum = '1.2.3';
+const versionNum = '1.3.0';
 httpServer.on('error', errMsg => {
     console.error(`Unable to start webservice: ${errMsg}`);
     process_1.default.exit(1);
@@ -155,6 +155,7 @@ if (typeof cliArgs["--help"] !== 'undefined') {
 ;
 expressObj.use(express_1.default.urlencoded({ extended: true }));
 expressObj.use(express_1.default.json());
+expressObj.disable('x-powered-by');
 async function startServer() {
     const browserObj = await puppeteer_1.default.launch(pupLaunchOptions).catch(errorMsg => {
         console.error(`Unable to start Browser: ${errorMsg}`);
@@ -162,30 +163,40 @@ async function startServer() {
     });
     const browserCtx = await browserObj.createIncognitoBrowserContext();
     const xssObj = new xssScanner_1.default(browserObj, browserCtx, configObj);
-    httpServer.on('timeout', socketObj => {
-        if (configObj.debugMode) {
-            console.error(`Request for ${xssObj.xssObj.requestData.checkUrl} timed out`);
-        }
-        let xssResponse = xssObj.xssObj;
-        xssResponse.responseData.errorMsg = `Request timed out after ${configObj.reqTimeout} seconds`;
-        xssResponse.responseData.statusCode = 408;
-        xssResponse.responseData.statusMsg = 'Request Timeout';
-        let xssJson = JSON.stringify(xssResponse);
-        socketObj.write('HTTP/1.1 408 Request Timeout\n');
-        socketObj.write('Content-Type: application/json; charset=utf-8\n');
-        socketObj.write(`Content-Length: ${xssJson.length + 1}` + '\n');
-        socketObj.write(`Date: ${(new Date).toUTCString()}` + '\n');
-        socketObj.write('Connection: keep-alive\n');
-        socketObj.write('\n');
-        socketObj.write(xssJson + '\n');
-        socketObj.destroy();
+    expressObj.use((reqObj, resObj, nextFunc) => {
+        resObj.setTimeout(configObj.reqTimeout * 1000, () => {
+            console.error(`Request for ${reqObj.originalUrl} timed out after ${configObj.reqTimeout} seconds`);
+            let returnObj = {
+                responseData: {
+                    statusCode: 408,
+                    statusMsg: 'Request Timeout',
+                    errorMsg: `Request timed out after ${configObj.reqTimeout} seconds`
+                },
+            };
+            return resObj.status(408).json(returnObj);
+        });
+        return nextFunc();
     });
-    expressObj.post('/check', (reqObj, resObj) => xssObj.processRequest(reqObj, resObj));
+    expressObj.get('/check', (reqObj, resObj, nextFunc) => {
+        resObj.send('This route does not support GET requests.' +
+            'Please refer to the <a href="https://github.com/wneessen/xssScanService/blob/master/README.md">' +
+            'xssScanService documentation</a> for more details.');
+    });
+    expressObj.post('/check', (reqObj, resObj, nextFunc) => xssObj.processRequest(reqObj, resObj, nextFunc).catch(errorMsg => {
+        console.error(`An error occured while processing the check request: ${errorMsg}`);
+    }));
+    expressObj.use((errObj, reqObj, resObj, nextFunc) => {
+        errObj.responseData.statusCode = 400;
+        errObj.responseData.statusMsg = 'Bad Request';
+        errObj.responseData.errorMsg = 'Missing or invalid request parameters';
+        return resObj.status(400).json(errObj);
+    });
     httpServer.listen(configObj.listenPort, configObj.listenHost, () => {
         console.log(`Server accepting requests on ${configObj.listenHost}:${configObj.listenPort}`);
     });
 }
 function showHelp() {
+    console.log(`xssScanService v${versionNum}`);
     console.log('Usage: node xssScanService.js [arguments]');
     console.log('  -b, --block <domains>\t\t\tAdd additional blocklist domain (can be used multiple times)');
     console.log('  -l, --listen <IP address or hostname>\tThe IP/hostname for the server to listen on (Default: 127.0.0.1)');

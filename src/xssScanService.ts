@@ -3,12 +3,11 @@
 import Express from 'express';
 //import * as httpsObj from 'https';
 import * as httpObj from 'http';
-import * as netObj from 'net';
 import Puppeteer from 'puppeteer';
 import XssScanner from './lib/xssScanner';
 import arg from 'arg';
 import process from 'process';
-import { IXssScanConfig } from './lib/xssInterfaces';
+import { IXssScanConfig, IXssObj } from './lib/xssInterfaces';
 
 // Signal handler
 process.on('SIGINT', () => {
@@ -17,11 +16,11 @@ process.on('SIGINT', () => {
 });
 
 // Initialize class objects
-const expressObj = Express()
+const expressObj = Express();
 const httpServer = httpObj.createServer(expressObj);
 
 // Some constant variables
-const versionNum: string = '1.2.3';
+const versionNum: string = '1.3.0';
 
 // Express exception handlers
 httpServer.on('error', errMsg => {
@@ -121,6 +120,7 @@ if(typeof cliArgs["--help"] !== 'undefined') { showHelp(); process.exit(0); };
 // Express webservice options
 expressObj.use(Express.urlencoded({ extended: true }));
 expressObj.use(Express.json());
+expressObj.disable('x-powered-by');
 
 // Initialize the webservice
 async function startServer() {
@@ -130,28 +130,41 @@ async function startServer() {
     });
     const browserCtx = await browserObj.createIncognitoBrowserContext();
     const xssObj = new XssScanner(browserObj, browserCtx, configObj);
-    httpServer.on('timeout', socketObj => {
-        if(configObj.debugMode) {
-            console.error(`Request for ${xssObj.xssObj.requestData.checkUrl} timed out`);
-        }
-        let xssResponse = xssObj.xssObj;
-        xssResponse.responseData.errorMsg = `Request timed out after ${configObj.reqTimeout} seconds`;
-        xssResponse.responseData.statusCode = 408;
-        xssResponse.responseData.statusMsg = 'Request Timeout';
-        let xssJson = JSON.stringify(xssResponse);
 
-        socketObj.write('HTTP/1.1 408 Request Timeout\n');
-        socketObj.write('Content-Type: application/json; charset=utf-8\n');
-        socketObj.write(`Content-Length: ${xssJson.length + 1}` + '\n');
-        socketObj.write(`Date: ${(new Date).toUTCString()}` + '\n');
-        socketObj.write('Connection: keep-alive\n');
-        socketObj.write('\n');
-        socketObj.write(xssJson + '\n');
-        socketObj.destroy();
-    })
+    // Timeout handler
+    expressObj.use((reqObj: Express.Request, resObj: Express.Response, nextFunc: Express.NextFunction) => {
+        resObj.setTimeout(configObj.reqTimeout * 1000, () => {
+            console.error(`Request for ${reqObj.originalUrl} timed out after ${configObj.reqTimeout} seconds`);
+            let returnObj = {
+                responseData: {
+                    statusCode: 408,
+                    statusMsg: 'Request Timeout',
+                    errorMsg: `Request timed out after ${configObj.reqTimeout} seconds`
+                },
+            };
+            return resObj.status(408).json(returnObj);
+        });
+
+        return nextFunc();
+    });
 
     // Routes
-    expressObj.post('/check', (reqObj, resObj) => xssObj.processRequest(reqObj, resObj));
+    expressObj.get('/check', (reqObj, resObj, nextFunc) => {
+        resObj.send(
+            'This route does not support GET requests.' + 
+            'Please refer to the <a href="https://github.com/wneessen/xssScanService/blob/master/README.md">' +
+            'xssScanService documentation</a> for more details.'
+        );
+    });
+    expressObj.post('/check', (reqObj, resObj, nextFunc) => xssObj.processRequest(reqObj, resObj, nextFunc).catch(errorMsg => {
+        console.error(`An error occured while processing the check request: ${errorMsg}`);
+    }));
+    expressObj.use((errObj: IXssObj, reqObj: Express.Request, resObj: Express.Response, nextFunc: Express.NextFunction) => {
+        errObj.responseData.statusCode = 400;
+        errObj.responseData.statusMsg = 'Bad Request';
+        errObj.responseData.errorMsg = 'Missing or invalid request parameters';
+        return resObj.status(400).json(errObj);
+    });
 
     // Start server
     httpServer.listen(configObj.listenPort, configObj.listenHost, () => {
@@ -160,6 +173,7 @@ async function startServer() {
 }
 
 function showHelp() {
+    console.log(`xssScanService v${versionNum}`);
     console.log('Usage: node xssScanService.js [arguments]');
     console.log('  -b, --block <domains>\t\t\tAdd additional blocklist domain (can be used multiple times)');
     console.log('  -l, --listen <IP address or hostname>\tThe IP/hostname for the server to listen on (Default: 127.0.0.1)');

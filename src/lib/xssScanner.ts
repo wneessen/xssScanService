@@ -34,7 +34,7 @@ export default class XssScanner {
      * @returns {Promise<Express.Response>}
      * @memberof XssScanner
     */
-    public async processRequest(reqObj: Express.Request, resObj: Express.Response): Promise<Express.Response> {
+    public async processRequest(reqObj: Express.Request, resObj: Express.Response, nextFunc: Express.NextFunction): Promise<Express.Response> {
         reqObj.setTimeout(this.configObj.reqTimeout * 1000);
         const dateObj = new Date();
         this.xssReqData = {
@@ -81,8 +81,16 @@ export default class XssScanner {
         if(reqObj.body.url) {
             this.xssObj.requestData.checkUrl = reqObj.body.url;
         }
+        else {
+            nextFunc(this.xssObj);
+            return;
+        }
         if(reqObj.body.querystring) {
             this.xssObj.requestData.queryString = reqObj.body.url.includes('?') ? `&${reqObj.body.querystring}` : `?${reqObj.body.querystring}`
+        }
+        else {
+            nextFunc(this.xssObj);
+            return;
         }
 
         if(
@@ -99,9 +107,14 @@ export default class XssScanner {
             if(this.configObj.debugMode) {
                 console.debug(`Request to ${this.xssObj.requestData.checkUrl} completed in ${(this.xssObj.responseData.requestTime / 1000).toFixed(3)} sec`);
             }
-            return resObj.json(this.xssObj);
+            if(resObj.writableFinished === false) {
+                return resObj.json(this.xssObj);
+            }
+            else {
+                nextFunc();
+                return
+            }
         }
-
     }
 
     /**
