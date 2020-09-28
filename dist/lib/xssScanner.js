@@ -92,6 +92,9 @@ class XssScanner {
         pageObj.on('dialog', eventObj => this.eventTriggered(eventObj));
         pageObj.on('requestfailed', requestObj => this.errorTriggered(requestObj));
         const httpResponse = await pageObj.goto(this.xssObj.requestData.checkUrl, { waitUntil: 'networkidle0' }).catch(errorMsg => {
+            this.xssObj.responseData.errorMsg = `${errorMsg}`;
+            this.xssObj.responseData.statusCode = 400;
+            this.xssObj.responseData.statusMsg = 'Bad request';
             console.error(`An error occured during "Page Goto" => ${errorMsg}`);
         });
         if (!httpResponse)
