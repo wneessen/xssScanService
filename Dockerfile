@@ -4,7 +4,7 @@ FROM        archlinux
 LABEL       maintainer="wn@neessen.net"
 RUN         pacman -Syu --noconfirm
 RUN         pacman -S --noconfirm nodejs npm && \
-            addgroup -S xssscanservice && adduser -S -G xssscanservice -g "xssScanService user" -s /bin/bash -h /opt/xssScanService xssscanservice
+            /usr/bin/groupadd -r xssscanservice && /usr/bin/useradd -r -g xssscanservice -c "xssScanService user" -m -s /bin/bash -h /opt/xssScanService xssscanservice
 COPY        . /opt/xssScanService
 WORKDIR     /opt/xssScanService
 USER        xssscanservice
