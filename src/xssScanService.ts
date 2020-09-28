@@ -20,7 +20,7 @@ const expressObj = Express();
 const httpServer = httpObj.createServer(expressObj);
 
 // Some constant variables
-const versionNum: string = '1.3.1';
+const versionNum: string = '1.4.0';
 
 // Express exception handlers
 httpServer.on('error', errMsg => {
@@ -62,12 +62,14 @@ try {
         '--perf': Boolean,
         '--cache': Boolean,
         '--help': Boolean,
-        '--returnerrors': Boolean,
-        '--ignoresslerrors': Boolean,
+        '--return-errors': Boolean,
+        '--ignore-ssl-errors': Boolean,
         '--block': [String],
         '--browserpath': String,
         '--browsertype': String,
-        '--noheadless': Boolean,
+        '--no-headless': Boolean,
+        '--no-sandbox': Boolean,
+        '--no-listen-localhost': Boolean,
 
         // Aliases
         '-l': '--listen',
@@ -77,7 +79,7 @@ try {
         '-c': '--cache',
         '-d': '--debug',
         '-h': '--help',
-        '-s': '--ignoresslerrors'
+        '-s': '--ignore-ssl-errors'
     }, { argv: process.argv.slice(2) });
 }
 catch(errorObj) {
@@ -95,9 +97,11 @@ if(typeof cliArgs["--block"] !== 'undefined') { cliArgs["--block"].forEach(block
 if(typeof cliArgs["--debug"] !== 'undefined') { configObj.debugMode = true };
 if(typeof cliArgs["--perf"] !== 'undefined') { configObj.perfMode = true; };
 if(typeof cliArgs["--cache"] !== 'undefined') { configObj.allowCache = true };
-if(typeof cliArgs["--returnerrors"] !== 'undefined') { configObj.returnErrors = true };
-if(typeof cliArgs["--ignoresslerrors"] !== 'undefined') { pupLaunchOptions.ignoreHTTPSErrors = true };
-if(typeof cliArgs["--noheadless"] !== 'undefined') { pupLaunchOptions.headless = false; };
+if(typeof cliArgs["--return-errors"] !== 'undefined') { configObj.returnErrors = true };
+if(typeof cliArgs["--ignore-ssl-errors"] !== 'undefined') { pupLaunchOptions.ignoreHTTPSErrors = true };
+if(typeof cliArgs["--no-headless"] !== 'undefined') { pupLaunchOptions.headless = false; };
+if(typeof cliArgs["--no-sandbox"] !== 'undefined') { pupLaunchOptions.args.push('--no-sandbox'); };
+if(typeof cliArgs["--no-listen-localhost"] !== 'undefined') { configObj.listenHost = null; };
 if(typeof cliArgs["--browserpath"] !== 'undefined') { pupLaunchOptions.executablePath = cliArgs["--browserpath"] };
 if(
     typeof cliArgs["--browsertype"] !== 'undefined' && 
@@ -167,9 +171,16 @@ async function startServer() {
     });
 
     // Start server
-    httpServer.listen(configObj.listenPort, configObj.listenHost, () => {
-        console.log(`Server accepting requests on ${configObj.listenHost}:${configObj.listenPort}`);
-    });
+    if(configObj.listenHost === null) {
+        httpServer.listen(configObj.listenPort, () => {
+            console.log(`Server accepting requests on *:${configObj.listenPort}`);
+        });
+    }
+    else {
+        httpServer.listen(configObj.listenPort, configObj.listenHost, () => {
+            console.log(`Server accepting requests on ${configObj.listenHost}:${configObj.listenPort}`);
+        });
+    }
 }
 
 function showHelp() {
@@ -181,9 +192,11 @@ function showHelp() {
     console.log('  -t, --timeout <seconds>\t\tAmount of seconds until the request times out');
     console.log('  -c, --cache\t\t\t\tEnable caching of websites');
     console.log('  -s, --ignoresslerrors\t\t\tIgnore HTTPS errors');
-    console.log('  --returnerrors\t\t\tIf set, the response object will return resource errors');
+    console.log('  --retur-nerrors\t\t\tIf set, the response object will return resource errors');
     console.log('  --perf\t\t\t\tIf set, the response object will return performance date');
-    console.log('  --noheadless\t\t\t\tIf set, the browser will start in non-headless mode');
+    console.log('  --no-headless\t\t\t\tIf set, the browser will start in non-headless mode');
+    console.log('  --no-listen-localhost\t\t\tIf set, the webservice will not be bound to localhost');
+    console.log('  --no-sandbox\t\t\t\tIf set, the browser is started in no-sandbox mode (DANGER: Only use if you are sure what you are doing)');
     console.log('  --browserpath <path>\t\t\tPath to browser executable (Using Firefox requires --browsertype firefox)');
     console.log('  --browsertype <firefox|chrome>\tType of browser to use (Requires --browserpath to be set)');
     console.log('  -d, --debug\t\t\t\tEnable DEBUG mode');
