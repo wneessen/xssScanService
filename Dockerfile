@@ -1,5 +1,5 @@
 ## Dockerfile for xssScanService
-##
+## 
 FROM        archlinux
 LABEL       maintainer="wn@neessen.net"
 RUN         pacman -Syu --noconfirm --noprogressbar
