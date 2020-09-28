@@ -34,13 +34,13 @@ process_1.default.on('SIGINT', () => {
 });
 const expressObj = express_1.default();
 const httpServer = httpObj.createServer(expressObj);
-const versionNum = '1.3.1-dev';
+const versionNum = '1.3.2-dev';
 httpServer.on('error', errMsg => {
     console.error(`Unable to start webservice: ${errMsg}`);
     process_1.default.exit(1);
 });
 const configObj = {
-    listenHost: null,
+    listenHost: 'localhost',
     listenPort: 8099,
     reqTimeout: 5000,
     debugMode: false,
@@ -75,6 +75,7 @@ try {
         '--browserpath': String,
         '--browsertype': String,
         '--noheadless': Boolean,
+        '--nosandbox': Boolean,
         '-l': '--listen',
         '-p': '--port',
         '-t': '--timeout',
@@ -129,6 +130,10 @@ if (typeof cliArgs["--ignoresslerrors"] !== 'undefined') {
 ;
 if (typeof cliArgs["--noheadless"] !== 'undefined') {
     pupLaunchOptions.headless = false;
+}
+;
+if (typeof cliArgs["--nosandbox"] !== 'undefined') {
+    pupLaunchOptions.args.push('--no-sandbox');
 }
 ;
 if (typeof cliArgs["--browserpath"] !== 'undefined') {
@@ -191,16 +196,9 @@ async function startServer() {
         errObj.responseData.errorMsg = 'Missing or invalid request parameters';
         return resObj.status(400).json(errObj);
     });
-    if (configObj.listenHost !== null) {
-        httpServer.listen(configObj.listenPort, configObj.listenHost, () => {
-            console.log(`Server accepting requests on ${configObj.listenHost}:${configObj.listenPort}`);
-        });
-    }
-    else {
-        httpServer.listen(configObj.listenPort, () => {
-            console.log(`Server accepting requests on port ${configObj.listenPort}`);
-        });
-    }
+    httpServer.listen(configObj.listenPort, configObj.listenHost, () => {
+        console.log(`Server accepting requests on ${configObj.listenHost}:${configObj.listenPort}`);
+    });
 }
 function showHelp() {
     console.log(`xssScanService v${versionNum}`);

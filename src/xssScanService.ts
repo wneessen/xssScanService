@@ -20,7 +20,7 @@ const expressObj = Express();
 const httpServer = httpObj.createServer(expressObj);
 
 // Some constant variables
-const versionNum: string = '1.3.1-dev';
+const versionNum: string = '1.3.2-dev';
 
 // Express exception handlers
 httpServer.on('error', errMsg => {
@@ -30,7 +30,7 @@ httpServer.on('error', errMsg => {
 
 // Default variables
 const configObj: IXssScanConfig = {
-    listenHost: null,
+    listenHost: 'localhost',
     listenPort: 8099,
     reqTimeout: 5000,
     debugMode: false,
@@ -68,6 +68,7 @@ try {
         '--browserpath': String,
         '--browsertype': String,
         '--noheadless': Boolean,
+        '--nosandbox': Boolean,
 
         // Aliases
         '-l': '--listen',
@@ -98,6 +99,7 @@ if(typeof cliArgs["--cache"] !== 'undefined') { configObj.allowCache = true };
 if(typeof cliArgs["--returnerrors"] !== 'undefined') { configObj.returnErrors = true };
 if(typeof cliArgs["--ignoresslerrors"] !== 'undefined') { pupLaunchOptions.ignoreHTTPSErrors = true };
 if(typeof cliArgs["--noheadless"] !== 'undefined') { pupLaunchOptions.headless = false; };
+if(typeof cliArgs["--nosandbox"] !== 'undefined') { pupLaunchOptions.args.push('--no-sandbox'); };
 if(typeof cliArgs["--browserpath"] !== 'undefined') { pupLaunchOptions.executablePath = cliArgs["--browserpath"] };
 if(
     typeof cliArgs["--browsertype"] !== 'undefined' && 
@@ -167,16 +169,9 @@ async function startServer() {
     });
 
     // Start server
-    if(configObj.listenHost !== null) {
-        httpServer.listen(configObj.listenPort, configObj.listenHost, () => {
-            console.log(`Server accepting requests on ${configObj.listenHost}:${configObj.listenPort}`);
-        });
-    }
-    else {
-        httpServer.listen(configObj.listenPort, () => {
-            console.log(`Server accepting requests on port ${configObj.listenPort}`);
-        });
-    }
+    httpServer.listen(configObj.listenPort, configObj.listenHost, () => {
+        console.log(`Server accepting requests on ${configObj.listenHost}:${configObj.listenPort}`);
+    });
 }
 
 function showHelp() {
