@@ -192,7 +192,7 @@ function showHelp() {
     console.log('  -t, --timeout <seconds>\t\tAmount of seconds until the request times out');
     console.log('  -c, --cache\t\t\t\tEnable caching of websites');
     console.log('  -s, --ignoresslerrors\t\t\tIgnore HTTPS errors');
-    console.log('  --retur-nerrors\t\t\tIf set, the response object will return resource errors');
+    console.log('  --return-errors\t\t\tIf set, the response object will return resource errors');
     console.log('  --perf\t\t\t\tIf set, the response object will return performance date');
     console.log('  --no-headless\t\t\t\tIf set, the browser will start in non-headless mode');
     console.log('  --no-listen-localhost\t\t\tIf set, the webservice will not be bound to localhost');
