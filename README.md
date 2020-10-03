@@ -44,15 +44,17 @@ After the installation completed you are ready to run
 ### Docker image
 There is a [Docker image](https://hub.docker.com/r/wneessen/xss-scan-service) for xssScanService available on DockerHub.
 
-**Important note: Due to the architecture of Docker, the service has to run the Chromium browser in "[no-sandbox](https://chromium.googlesource.com/chromium/src/+/master/docs/design/sandbox.md)" mode. Yes, Docker is sandboxing as well, but I cannot guarantee, that the same security environment will be given, as if you are running locally without Docker (with Chromiums sandbox-mode enabled). Therefore please make sure to use the Docker image at your own risk.**
-
 To run the Docker image simply issue the following command:
 ```sh
 $ sudo docker pull wneessen/xss-scan-service:latest
 ```
+Because of the security settings in docker, we need to run it with a specific seccomp-profile, otherwise Chrome will not be able to run. Therefore you need to download the profile file first:
+  ```sh
+  $ curl -LO https://raw.githubusercontent.com/wneessen/xssScanService/master/xssScanService-seccomp.json
+  ```
 Once the download finished, you can start the service by running:
 ```sh
-$ docker run -p 8099:8099 wneessen/xss-scan-service:latest
+$ docker run --security-opt seccomp=xssScanService-seccomp.json -p 8099:8099 wneessen/xss-scan-service:latest
 ```
 
 ## API
