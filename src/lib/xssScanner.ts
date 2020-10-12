@@ -1,7 +1,7 @@
 import Express from 'express';
 import Puppeteer, { ErrorCode } from 'puppeteer';
 import XssTools from './xssTools';
-import { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData, IPerformanceData } from './xssInterfaces';
+import { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData, IPerformanceData, IReturnConsoleWarning } from './xssInterfaces';
 
 export default class XssScanner {
     private browserObj: Puppeteer.Browser;
@@ -11,7 +11,6 @@ export default class XssScanner {
     private xssResData: IXssResObj = null;
     public xssObj: IXssObj = null;
     private requestData: IRequestData = {};
-    private benchMark: number = null;
     private toolsObj: XssTools = new XssTools();
     
     /**
@@ -57,6 +56,7 @@ export default class XssScanner {
             hasXss: false,
             xssData: [],
             resourceErrors: [],
+            consoleWarnings: [],
             requestId: null,
         };
         if(this.configObj.debugMode) {
@@ -255,6 +255,19 @@ export default class XssScanner {
             eventType = eventObj.type();
         }
         if(eventType === 'error') return;
+
+        if(eventType === 'warning') {
+            if(this.configObj.returnWarnings === true) {
+                let consoleWarning = eventObj as Puppeteer.ConsoleMessage;
+                const warnObj: IReturnConsoleWarning = {
+                    line: consoleWarning.location().lineNumber,
+                    url: consoleWarning.location().url,
+                    warnText: consoleWarning.text()
+                }
+                this.xssObj.consoleWarnings.push(warnObj);
+            }
+            return;
+        }
 
         if(this.configObj.debugMode) {
             console.log(`An event has been executed on ${this.xssObj.requestData.checkUrl}`);

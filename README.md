@@ -112,7 +112,8 @@ The server will respond with a JSON object. On a successfull identification of a
     "searchString": "1234"
   },
   "checkTime": "2020-09-16T07:37:26.627Z",
-  "resourceErrors": []
+  "resourceErrors": [],
+  "consoleWarnings": []
 }
 ```
 
@@ -160,6 +161,7 @@ In case the page seems clean, the response can look like this:
 - ```requestData (RequestData)```: Returns a ```RequestData``` object.
 - ```responeData (ResponeData)```: Returns a ```ResponeData``` object.
 - ```resourceErrors (Array<ResourceError>)```: Returns an array of ```ResourceError``` objects for each resource that could not be loaded.
+- ```consoleWarnings (Array<ConsoleWarning>)```: Returns an array of ```ConsoleWarning``` objects for each resource that could not be loaded.
 - ```performanceData (PerformanceData)```: Returns a ```PerformanceData``` object.
 - ```xssData (Array<EventData>)```: Returns an array of ```EventData``` objects for any event that fired.
 
@@ -183,6 +185,10 @@ In case the page seems clean, the response can look like this:
   - ```statusCode (number)```: Returns the HTTP status code
   - ```statusText (string)```: Returns the HTTP status text
   - ```url (string)```: Returns the URL that caused the error
+- ```ConsoleWarning (object)```: Returns an object that consists of the following objects:
+  - ```warnText (string)```: Returns the text of the console warning
+  - ```url (string)```: Returns the URL that caused the warning
+  - ```line (number)```: Returns the line number on where the warning was triggered
 - ```PerformanceData (object)```: Returns an object that consists of the following objects:
   - ```totalDurTime (number)```: Returns the time in ms for loading/evaluating the complete website
   - ```dnsTime (number)```: Returns the time in ms for the DNS lookup
@@ -223,6 +229,7 @@ LISTENPORT=1234
 BLOCKLIST="domain1.com domain2.com"
 SHOWPERFORMANCE=true
 SHOWERROS=true
+SHOWWARNINGS=true
 ENABLECACHING=true
 BROWSERPATH=/path/to/chrome
 BROWSERTYPE=chrome

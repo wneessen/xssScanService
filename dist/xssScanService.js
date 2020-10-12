@@ -14,7 +14,7 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
     __setModuleDefault(result, mod);
     return result;
 };
@@ -34,7 +34,7 @@ process_1.default.on('SIGINT', () => {
 });
 const expressObj = express_1.default();
 const httpServer = httpObj.createServer(expressObj);
-const versionNum = '1.4.1';
+const versionNum = '1.4.2';
 httpServer.on('error', errMsg => {
     console.error(`Unable to start webservice: ${errMsg}`);
     process_1.default.exit(1);
@@ -47,6 +47,7 @@ const configObj = {
     perfMode: false,
     webSecEnable: false,
     returnErrors: false,
+    returnWarnings: false,
     resBlockList: [
         'googletagmanager.com', 'google-analytics.com', 'optimizely.com', '.amazon-adsystem.com',
         'device-metrics-us.amazon.com', 'crashlytics.com', 'doubleclick.net'
@@ -70,6 +71,7 @@ try {
         '--cache': Boolean,
         '--help': Boolean,
         '--return-errors': Boolean,
+        '--return-warnings': Boolean,
         '--ignore-ssl-errors': Boolean,
         '--block': [String],
         '--browserpath': String,
@@ -123,6 +125,10 @@ if (typeof cliArgs["--cache"] !== 'undefined') {
 ;
 if (typeof cliArgs["--return-errors"] !== 'undefined') {
     configObj.returnErrors = true;
+}
+;
+if (typeof cliArgs["--return-warnings"] !== 'undefined') {
+    configObj.returnWarnings = true;
 }
 ;
 if (typeof cliArgs["--ignore-ssl-errors"] !== 'undefined') {
@@ -221,7 +227,7 @@ function showHelp() {
     console.log('  -t, --timeout <seconds>\t\tAmount of seconds until the request times out');
     console.log('  -c, --cache\t\t\t\tEnable caching of websites');
     console.log('  -s, --ignoresslerrors\t\t\tIgnore HTTPS errors');
-    console.log('  --retur-nerrors\t\t\tIf set, the response object will return resource errors');
+    console.log('  --return-errors\t\t\tIf set, the response object will return resource errors');
     console.log('  --perf\t\t\t\tIf set, the response object will return performance date');
     console.log('  --no-headless\t\t\t\tIf set, the browser will start in non-headless mode');
     console.log('  --no-listen-localhost\t\t\tIf set, the webservice will not be bound to localhost');

@@ -20,7 +20,7 @@ const expressObj = Express();
 const httpServer = httpObj.createServer(expressObj);
 
 // Some constant variables
-const versionNum: string = '1.4.1';
+const versionNum: string = '1.4.2';
 
 // Express exception handlers
 httpServer.on('error', errMsg => {
@@ -37,6 +37,7 @@ const configObj: IXssScanConfig = {
     perfMode: false,
     webSecEnable: false,
     returnErrors: false,
+    returnWarnings: false,
     resBlockList: [
         'googletagmanager.com', 'google-analytics.com', 'optimizely.com', '.amazon-adsystem.com',
         'device-metrics-us.amazon.com', 'crashlytics.com', 'doubleclick.net'
@@ -63,6 +64,7 @@ try {
         '--cache': Boolean,
         '--help': Boolean,
         '--return-errors': Boolean,
+        '--return-warnings': Boolean,
         '--ignore-ssl-errors': Boolean,
         '--block': [String],
         '--browserpath': String,
@@ -98,6 +100,7 @@ if(typeof cliArgs["--debug"] !== 'undefined') { configObj.debugMode = true };
 if(typeof cliArgs["--perf"] !== 'undefined') { configObj.perfMode = true; };
 if(typeof cliArgs["--cache"] !== 'undefined') { configObj.allowCache = true };
 if(typeof cliArgs["--return-errors"] !== 'undefined') { configObj.returnErrors = true };
+if(typeof cliArgs["--return-warnings"] !== 'undefined') { configObj.returnWarnings = true };
 if(typeof cliArgs["--ignore-ssl-errors"] !== 'undefined') { pupLaunchOptions.ignoreHTTPSErrors = true };
 if(typeof cliArgs["--no-headless"] !== 'undefined') { pupLaunchOptions.headless = false; };
 if(typeof cliArgs["--no-sandbox"] !== 'undefined') { pupLaunchOptions.args.push('--no-sandbox'); };
