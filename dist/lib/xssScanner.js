@@ -10,7 +10,6 @@ class XssScanner {
         this.xssResData = null;
         this.xssObj = null;
         this.requestData = {};
-        this.benchMark = null;
         this.toolsObj = new xssTools_1.default();
         this.browserObj = browserObj;
         this.browserCtx = browserCtx;
@@ -39,6 +38,7 @@ class XssScanner {
             hasXss: false,
             xssData: [],
             resourceErrors: [],
+            consoleWarnings: [],
             requestId: null,
         };
         if (this.configObj.debugMode) {
@@ -193,6 +193,18 @@ class XssScanner {
         }
         if (eventType === 'error')
             return;
+        if (eventType === 'warning') {
+            if (this.configObj.returnWarnings === true) {
+                let consoleWarning = eventObj;
+                const warnObj = {
+                    line: consoleWarning.location().lineNumber,
+                    url: consoleWarning.location().url,
+                    warnText: consoleWarning.text()
+                };
+                this.xssObj.consoleWarnings.push(warnObj);
+            }
+            return;
+        }
         if (this.configObj.debugMode) {
             console.log(`An event has been executed on ${this.xssObj.requestData.checkUrl}`);
             console.log(`==> EventType: "${eventType}" // EventData: "${eventMsg}"`);

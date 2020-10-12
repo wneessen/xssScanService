@@ -5,6 +5,7 @@ interface IXssScanConfig {
     debugMode: boolean;
     perfMode: boolean;
     returnErrors: boolean;
+    returnWarnings: boolean;
     webSecEnable: boolean;
     userAgent: string;
     allowCache?: boolean;
@@ -20,6 +21,7 @@ interface IXssObj {
     performanceData?: IPerformanceData;
     xssData: Array<IXssDataObj>;
     resourceErrors?: Array<IReturnResourceError>;
+    consoleWarnings?: Array<IReturnConsoleWarning>;
     blockedUrls?: Array<string>;
 }
 interface IXssReqObj {
@@ -45,6 +47,11 @@ interface IReturnResourceError {
     statusCode: number;
     statusText: string;
 }
+interface IReturnConsoleWarning {
+    url: string;
+    line: number;
+    warnText: string;
+}
 interface IRequestData {
     headers?: Record<string, string>;
     url?: string;
@@ -61,5 +68,5 @@ interface IPerformanceData {
     domContentTime: number;
     domCompleteTime: number;
 }
-export { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData, IPerformanceData };
+export { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData, IPerformanceData, IReturnConsoleWarning };
 //# sourceMappingURL=xssInterfaces.d.ts.map

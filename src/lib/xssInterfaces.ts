@@ -13,6 +13,7 @@ interface IXssScanConfig {
     debugMode: boolean,
     perfMode: boolean,
     returnErrors: boolean,
+    returnWarnings: boolean,
     webSecEnable: boolean,
     userAgent: string,
     allowCache?: boolean,
@@ -34,6 +35,7 @@ interface IXssObj {
     performanceData?: IPerformanceData,
     xssData: Array<IXssDataObj>,
     resourceErrors?: Array<IReturnResourceError>,
+    consoleWarnings?: Array<IReturnConsoleWarning>,
     blockedUrls?: Array<string>,
 }
 
@@ -85,6 +87,17 @@ interface IReturnResourceError {
 }
 
 /**
+ * Console Warning object - Holds information when a console warning is fired
+ *
+ * @interface IReturnConsoleWarning
+*/
+interface IReturnConsoleWarning {
+    url: string,
+    line: number,
+    warnText: string
+}
+
+/**
  * HTTP Request data - For request interception
  *
  * @interface IRequestData
@@ -112,4 +125,4 @@ interface IPerformanceData {
     domCompleteTime: number
 }
 
-export { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData, IPerformanceData }
+export { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData, IPerformanceData, IReturnConsoleWarning }

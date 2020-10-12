@@ -9,7 +9,6 @@ export default class XssScanner {
     private xssResData;
     xssObj: IXssObj;
     private requestData;
-    private benchMark;
     private toolsObj;
     constructor(browserObj: Puppeteer.Browser, browserCtx: Puppeteer.BrowserContext, configObj: IXssScanConfig);
     processRequest(reqObj: Express.Request, resObj: Express.Response, nextFunc: Express.NextFunction): Promise<Express.Response>;

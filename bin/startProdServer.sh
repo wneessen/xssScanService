@@ -42,6 +42,10 @@ if [ "x${SHOWERRORS}" = "xtrue" ]; then
     STARTPARMS="${STARTPARMS} --return-errors"
 fi
 
+if [ "x${SHOWWARNINGS}" = "xtrue" ]; then
+    STARTPARMS="${STARTPARMS} --return-warnings"
+fi
+
 if [ "x${SHOWPERFORMANCE}" = "xtrue" ]; then
     STARTPARMS="${STARTPARMS} --perf"
 fi
