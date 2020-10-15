@@ -68,5 +68,8 @@ interface IPerformanceData {
     domContentTime: number;
     domCompleteTime: number;
 }
-export { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData, IPerformanceData, IReturnConsoleWarning };
+interface IXssObjArray {
+    [key: string]: IXssObj;
+}
+export { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData, IPerformanceData, IReturnConsoleWarning, IXssObjArray };
 //# sourceMappingURL=xssInterfaces.d.ts.map
