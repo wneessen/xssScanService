@@ -20,7 +20,7 @@ const expressObj = Express();
 const httpServer = httpObj.createServer(expressObj);
 
 // Some constant variables
-const versionNum: string = '1.4.2';
+const versionNum: string = '1.4.3';
 
 // Express exception handlers
 httpServer.on('error', errMsg => {
@@ -174,6 +174,7 @@ async function startServer() {
     });
 
     // Start server
+    console.log(`xssScanService v${versionNum}`);
     if(configObj.listenHost === null) {
         httpServer.listen(configObj.listenPort, () => {
             console.log(`Server accepting requests on *:${configObj.listenPort}`);

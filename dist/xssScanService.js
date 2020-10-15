@@ -34,7 +34,7 @@ process_1.default.on('SIGINT', () => {
 });
 const expressObj = express_1.default();
 const httpServer = httpObj.createServer(expressObj);
-const versionNum = '1.4.2';
+const versionNum = '1.4.3';
 httpServer.on('error', errMsg => {
     console.error(`Unable to start webservice: ${errMsg}`);
     process_1.default.exit(1);
@@ -207,6 +207,7 @@ async function startServer() {
         errObj.responseData.errorMsg = 'Missing or invalid request parameters';
         return resObj.status(400).json(errObj);
     });
+    console.log(`xssScanService v${versionNum}`);
     if (configObj.listenHost === null) {
         httpServer.listen(configObj.listenPort, () => {
             console.log(`Server accepting requests on *:${configObj.listenPort}`);

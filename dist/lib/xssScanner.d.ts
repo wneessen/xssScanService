@@ -1,13 +1,11 @@
 import Express from 'express';
 import Puppeteer from 'puppeteer';
-import { IXssScanConfig, IXssObj } from './xssInterfaces';
+import { IXssScanConfig, IXssObjArray } from './xssInterfaces';
 export default class XssScanner {
     private browserObj;
     private browserCtx;
     private configObj;
-    private xssReqData;
-    private xssResData;
-    xssObj: IXssObj;
+    xssObj: IXssObjArray;
     private requestData;
     private toolsObj;
     constructor(browserObj: Puppeteer.Browser, browserCtx: Puppeteer.BrowserContext, configObj: IXssScanConfig);

@@ -6,9 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const xssTools_1 = __importDefault(require("./xssTools"));
 class XssScanner {
     constructor(browserObj, browserCtx, configObj) {
-        this.xssReqData = null;
-        this.xssResData = null;
-        this.xssObj = null;
+        this.xssObj = {};
         this.requestData = {};
         this.toolsObj = new xssTools_1.default();
         this.browserObj = browserObj;
@@ -17,29 +15,30 @@ class XssScanner {
     }
     async processRequest(reqObj, resObj, nextFunc) {
         reqObj.setTimeout(this.configObj.reqTimeout * 1000);
+        const curReqId = this.toolsObj.shaDigest('sha1', `${Date.now()}${reqObj.body.url}${reqObj.body.queryString}`);
         const dateObj = new Date();
-        this.xssReqData = {
+        let xssReqData = {
             alertOnAnyEvent: false,
             checkUrl: null,
             queryString: null,
             reqMethod: 'GET',
             searchString: 'XSSed!',
         };
-        this.xssResData = {
+        let xssResData = {
             requestTime: 0,
             statusMsg: null,
             statusCode: 0,
         };
-        this.xssObj = {
+        this.xssObj[curReqId] = {
             blockedUrls: [],
             checkTime: dateObj,
-            responseData: this.xssResData,
-            requestData: this.xssReqData,
+            responseData: xssResData,
+            requestData: xssReqData,
             hasXss: false,
             xssData: [],
             resourceErrors: [],
             consoleWarnings: [],
-            requestId: null,
+            requestId: curReqId
         };
         if (this.configObj.debugMode) {
             console.log('Received new HTTP request');
@@ -48,48 +47,47 @@ class XssScanner {
             }
         }
         if (reqObj.body.searchfor) {
-            this.xssObj.requestData.searchString = reqObj.body.searchfor;
+            this.xssObj[curReqId].requestData.searchString = reqObj.body.searchfor;
         }
         if (reqObj.body.everyevent && reqObj.body.everyevent === 'true') {
-            this.xssObj.requestData.alertOnAnyEvent = true;
+            this.xssObj[curReqId].requestData.alertOnAnyEvent = true;
         }
         if (reqObj.body.reqmethod) {
             if (reqObj.body.reqmethod.toUpperCase() !== 'POST' && reqObj.body.reqmethod.toUpperCase() !== 'GET') {
-                this.xssObj.requestData.reqMethod = `${reqObj.body.reqmethod.toUpperCase()}_NOT_SUPPORTED`;
+                this.xssObj[curReqId].requestData.reqMethod = `${reqObj.body.reqmethod.toUpperCase()}_NOT_SUPPORTED`;
             }
             else {
-                this.xssObj.requestData.reqMethod = reqObj.body.reqmethod.toUpperCase();
+                this.xssObj[curReqId].requestData.reqMethod = reqObj.body.reqmethod.toUpperCase();
             }
         }
         if (reqObj.body.url) {
-            this.xssObj.requestData.checkUrl = reqObj.body.url;
+            this.xssObj[curReqId].requestData.checkUrl = reqObj.body.url;
         }
         else {
             nextFunc(this.xssObj);
             return;
         }
         if (reqObj.body.querystring) {
-            this.xssObj.requestData.queryString = reqObj.body.url.includes('?') ? `&${reqObj.body.querystring}` : `?${reqObj.body.querystring}`;
+            this.xssObj[curReqId].requestData.queryString = reqObj.body.url.includes('?') ? `&${reqObj.body.querystring}` : `?${reqObj.body.querystring}`;
         }
         else {
-            nextFunc(this.xssObj);
+            nextFunc(this.xssObj[curReqId]);
             return;
         }
-        if ((!this.xssObj.requestData.checkUrl || this.xssObj.requestData.checkUrl === '') ||
-            this.xssObj.requestData.reqMethod.match(/_NOT_SUPPORTED$/) ||
-            (this.xssObj.requestData.queryString === null && this.xssObj.requestData.alertOnAnyEvent === false)) {
-            this.xssObj.responseData.statusCode = 400;
-            this.xssObj.responseData.errorMsg = 'Missing or invalid request parameters';
+        if ((!this.xssObj[curReqId].requestData.checkUrl || this.xssObj[curReqId].requestData.checkUrl === '') ||
+            this.xssObj[curReqId].requestData.reqMethod.match(/_NOT_SUPPORTED$/) ||
+            (this.xssObj[curReqId].requestData.queryString === null && this.xssObj[curReqId].requestData.alertOnAnyEvent === false)) {
+            this.xssObj[curReqId].responseData.statusCode = 400;
+            this.xssObj[curReqId].responseData.errorMsg = 'Missing or invalid request parameters';
             return resObj.status(400).json(this.xssObj);
         }
         else {
-            this.xssObj.requestId = this.toolsObj.shaDigest('sha1', `${Date.now()}${this.xssObj.requestData.checkUrl}${this.xssObj.requestData.queryString}`);
-            await this.processPage();
+            await this.processPage(curReqId);
             if (this.configObj.debugMode) {
-                console.debug(`Request to ${this.xssObj.requestData.checkUrl} completed in ${(this.xssObj.responseData.requestTime / 1000).toFixed(3)} sec`);
+                console.debug(`Request to ${this.xssObj[curReqId].requestData.checkUrl} completed in ${(this.xssObj[curReqId].responseData.requestTime / 1000).toFixed(3)} sec (RequestID: ${curReqId})`);
             }
             if (resObj.writableFinished === false) {
-                return resObj.json(this.xssObj);
+                return resObj.json(this.xssObj[curReqId]);
             }
             else {
                 nextFunc();
@@ -97,20 +95,20 @@ class XssScanner {
             }
         }
     }
-    async processPage() {
+    async processPage(curReqId) {
         const pageObj = this.configObj.allowCache === true ? await this.browserObj.newPage() : await this.browserCtx.newPage();
         await pageObj.setUserAgent(this.configObj.userAgent).catch();
         await pageObj.setRequestInterception(true);
         await pageObj.setDefaultTimeout(this.configObj.reqTimeout * 1000);
-        pageObj.once('request', requestObj => this.modifyRequest(requestObj));
-        pageObj.on('request', requestObj => this.checkBlocklist(requestObj));
-        pageObj.on('console', eventObj => this.eventTriggered(eventObj));
-        pageObj.on('dialog', eventObj => this.eventTriggered(eventObj));
-        pageObj.on('requestfailed', requestObj => this.errorTriggered(requestObj));
-        const httpResponse = await pageObj.goto(this.xssObj.requestData.checkUrl, { waitUntil: 'networkidle0' }).catch(errorMsg => {
-            this.xssObj.responseData.errorMsg = `${errorMsg}`;
-            this.xssObj.responseData.statusCode = 400;
-            this.xssObj.responseData.statusMsg = 'Bad request';
+        pageObj.once('request', requestObj => this.modifyRequest(requestObj, curReqId));
+        pageObj.on('request', requestObj => this.checkBlocklist(requestObj, curReqId));
+        pageObj.on('console', eventObj => this.eventTriggered(eventObj, curReqId));
+        pageObj.on('dialog', eventObj => this.eventTriggered(eventObj, curReqId));
+        pageObj.on('requestfailed', requestObj => this.errorTriggered(requestObj, curReqId));
+        const httpResponse = await pageObj.goto(this.xssObj[curReqId].requestData.checkUrl, { waitUntil: 'networkidle0' }).catch(errorMsg => {
+            this.xssObj[curReqId].responseData.errorMsg = `${errorMsg}`;
+            this.xssObj[curReqId].responseData.statusCode = 400;
+            this.xssObj[curReqId].responseData.statusMsg = 'Bad request';
             console.error(`An error occured during "Page Goto" => ${errorMsg}`);
         });
         if (!httpResponse)
@@ -128,30 +126,29 @@ class XssScanner {
         if (perfJson) {
             let perfData = this.processPerformanceData(perfJson);
             if (this.configObj.perfMode) {
-                this.xssObj.performanceData = perfData;
+                this.xssObj[curReqId].performanceData = perfData;
             }
-            this.xssObj.responseData.requestTime = perfData.totalDurTime;
+            this.xssObj[curReqId].responseData.requestTime = perfData.totalDurTime;
         }
-        pageObj.close();
-        this.xssObj.requestData.queryString = this.xssObj.requestData.queryString.substr(1);
-        this.xssObj.responseData.statusCode = httpResponse.status();
-        this.xssObj.responseData.statusMsg = httpResponse.statusText();
+        this.xssObj[curReqId].requestData.queryString = this.xssObj[curReqId].requestData.queryString.substr(1);
+        this.xssObj[curReqId].responseData.statusCode = httpResponse.status();
+        this.xssObj[curReqId].responseData.statusMsg = httpResponse.statusText();
     }
-    async modifyRequest(requestObj) {
-        if (this.xssObj.requestData.reqMethod === 'POST') {
-            this.requestData.method = this.xssObj.requestData.reqMethod;
-            this.requestData.postData = this.xssObj.requestData.queryString;
+    async modifyRequest(requestObj, curReqId) {
+        if (this.xssObj[curReqId].requestData.reqMethod === 'POST') {
+            this.requestData.method = this.xssObj[curReqId].requestData.reqMethod;
+            this.requestData.postData = this.xssObj[curReqId].requestData.queryString;
             this.requestData.headers = {
                 ...requestObj.headers(),
                 'Content-Type': 'application/x-www-form-urlencoded'
             };
         }
         else {
-            this.requestData.method = this.xssObj.requestData.reqMethod;
-            this.requestData.url = `${this.xssObj.requestData.checkUrl}${this.xssObj.requestData.queryString}`;
+            this.requestData.method = this.xssObj[curReqId].requestData.reqMethod;
+            this.requestData.url = `${this.xssObj[curReqId].requestData.checkUrl}${this.xssObj[curReqId].requestData.queryString}`;
         }
     }
-    async checkBlocklist(requestObj) {
+    async checkBlocklist(requestObj, curReqId) {
         let continueData = this.requestData;
         this.requestData = {};
         const isBlocklisted = (blockListItem) => {
@@ -163,7 +160,7 @@ class XssScanner {
             if (this.configObj.debugMode) {
                 console.log(`${requestObj.url()} is blocklisted. Not loading resource.`);
             }
-            this.xssObj.blockedUrls.push(requestObj.url());
+            this.xssObj[curReqId].blockedUrls.push(requestObj.url());
             await requestObj.abort(errorObj);
         }
         else {
@@ -179,7 +176,7 @@ class XssScanner {
             }
         }
     }
-    async eventTriggered(eventObj) {
+    async eventTriggered(eventObj, curReqId) {
         let eventMsg = null;
         let eventType = null;
         if (this.toolsObj.eventIsDialog(eventObj)) {
@@ -201,23 +198,23 @@ class XssScanner {
                     url: consoleWarning.location().url,
                     warnText: consoleWarning.text()
                 };
-                this.xssObj.consoleWarnings.push(warnObj);
+                this.xssObj[curReqId].consoleWarnings.push(warnObj);
             }
             return;
         }
         if (this.configObj.debugMode) {
-            console.log(`An event has been executed on ${this.xssObj.requestData.checkUrl}`);
+            console.log(`An event has been executed on ${this.xssObj[curReqId].requestData.checkUrl}`);
             console.log(`==> EventType: "${eventType}" // EventData: "${eventMsg}"`);
         }
-        if (eventMsg === this.xssObj.requestData.searchString || this.xssObj.requestData.alertOnAnyEvent === true) {
+        if (eventMsg === this.xssObj[curReqId].requestData.searchString || this.xssObj[curReqId].requestData.alertOnAnyEvent === true) {
             if (this.configObj.debugMode) {
-                console.log(`Possible XSS! The eventMsg matches the search string: "${this.xssObj.requestData.searchString}"`);
+                console.log(`Possible XSS! The eventMsg matches the search string: "${this.xssObj[curReqId].requestData.searchString}"`);
             }
-            this.xssObj.hasXss = true;
-            this.xssObj.xssData.push({ eventType: eventType, eventMsg: eventMsg });
+            this.xssObj[curReqId].hasXss = true;
+            this.xssObj[curReqId].xssData.push({ eventType: eventType, eventMsg: eventMsg });
         }
     }
-    async errorTriggered(requestObj) {
+    async errorTriggered(requestObj, curReqId) {
         if (this.configObj.debugMode) {
             console.error(`Unable to load resource URL => ${requestObj.url()}`);
             console.error(`Request failed with an "${requestObj.failure().errorText}" error`);
@@ -226,7 +223,7 @@ class XssScanner {
             }
         }
         if (this.configObj.returnErrors && this.configObj.resErrorIgnoreCodes.indexOf(requestObj.failure().errorText) === -1) {
-            this.xssObj.resourceErrors.push({
+            this.xssObj[curReqId].resourceErrors.push({
                 url: requestObj.url(),
                 errorCode: requestObj.failure().errorText,
                 statusCode: requestObj.response() ? requestObj.response().status() : null,

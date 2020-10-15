@@ -125,4 +125,13 @@ interface IPerformanceData {
     domCompleteTime: number
 }
 
-export { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData, IPerformanceData, IReturnConsoleWarning }
+/**
+ * Array of XSSObjects
+ *
+ * @interface IXssObjArray
+*/
+interface IXssObjArray {
+    [key: string]: IXssObj
+}
+
+export { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData, IPerformanceData, IReturnConsoleWarning, IXssObjArray }
