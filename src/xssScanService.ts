@@ -20,7 +20,7 @@ const expressObj = Express();
 const httpServer = httpObj.createServer(expressObj);
 
 // Some constant variables
-const versionNum: string = '1.4.3';
+const versionNum: string = '1.4.4';
 
 // Express exception handlers
 httpServer.on('error', errMsg => {
@@ -43,6 +43,7 @@ const configObj: IXssScanConfig = {
         'device-metrics-us.amazon.com', 'crashlytics.com', 'doubleclick.net'
     ],
     resErrorIgnoreCodes: [ 'net::ERR_BLOCKED_BY_CLIENT.Inspector' ],
+    consoleIgnoreList: [],
     allowCache: false,
     userAgent: `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 xssScanService/${versionNum}`
 };
@@ -72,6 +73,7 @@ try {
         '--no-headless': Boolean,
         '--no-sandbox': Boolean,
         '--no-listen-localhost': Boolean,
+        '--console-ignore-list': [Object],
 
         // Aliases
         '-l': '--listen',
@@ -119,6 +121,14 @@ if(
     else {
         pupLaunchOptions.product = (cliArgs["--browsertype"] as Puppeteer.Product)
     }
+};
+if(typeof cliArgs["--console-ignore-list"] !== 'undefined') {
+    (cliArgs["--console-ignore-list"] as Array<string>).forEach(ignoreEntry => {
+        let ignoreArray = ignoreEntry.split('=');
+        if(ignoreArray.length === 2) {
+            configObj.consoleIgnoreList.push({eventType: ignoreArray[0], consoleMessage: ignoreArray[1]});
+        }
+    });
 };
 
 // Show help

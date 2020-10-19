@@ -68,6 +68,12 @@ if [ "x${BLOCKLIST}" != "x" ]; then
     done
 fi
 
+if [ "x${CONSOLEIGNORE}" != "x" ]; then
+    for IGNOREENTRY in "${CONSOLEIGNORE[@]}"; do
+        STARTPARMS="${STARTPARMS} --console-ignore-list \"${IGNOREENTRY}\""
+    done
+fi
+
 case "${1}" in
     start)
         ${NODEJS} ${BASEDIR}/dist/xssScanService.js ${STARTPARMS}
