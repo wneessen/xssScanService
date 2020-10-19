@@ -34,7 +34,7 @@ process_1.default.on('SIGINT', () => {
 });
 const expressObj = express_1.default();
 const httpServer = httpObj.createServer(expressObj);
-const versionNum = '1.4.3';
+const versionNum = '1.4.4';
 httpServer.on('error', errMsg => {
     console.error(`Unable to start webservice: ${errMsg}`);
     process_1.default.exit(1);
@@ -53,6 +53,7 @@ const configObj = {
         'device-metrics-us.amazon.com', 'crashlytics.com', 'doubleclick.net'
     ],
     resErrorIgnoreCodes: ['net::ERR_BLOCKED_BY_CLIENT.Inspector'],
+    consoleIgnoreList: [],
     allowCache: false,
     userAgent: `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.102 Safari/537.36 xssScanService/${versionNum}`
 };
@@ -79,6 +80,7 @@ try {
         '--no-headless': Boolean,
         '--no-sandbox': Boolean,
         '--no-listen-localhost': Boolean,
+        '--console-ignore-list': [Object],
         '-l': '--listen',
         '-p': '--port',
         '-t': '--timeout',
@@ -162,6 +164,15 @@ if (typeof cliArgs["--browsertype"] !== 'undefined' &&
     else {
         pupLaunchOptions.product = cliArgs["--browsertype"];
     }
+}
+;
+if (typeof cliArgs["--console-ignore-list"] !== 'undefined') {
+    cliArgs["--console-ignore-list"].forEach(ignoreEntry => {
+        let ignoreArray = ignoreEntry.split('=');
+        if (ignoreArray.length === 2) {
+            configObj.consoleIgnoreList.push({ eventType: ignoreArray[0], consoleMessage: ignoreArray[1] });
+        }
+    });
 }
 ;
 if (typeof cliArgs["--help"] !== 'undefined') {

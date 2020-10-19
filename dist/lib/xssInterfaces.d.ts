@@ -11,6 +11,7 @@ interface IXssScanConfig {
     allowCache?: boolean;
     resBlockList?: Array<string>;
     resErrorIgnoreCodes?: Array<string>;
+    consoleIgnoreList?: Array<IXssConsoleIgnoreEntry>;
 }
 interface IXssObj {
     requestId: string;
@@ -71,5 +72,9 @@ interface IPerformanceData {
 interface IXssObjArray {
     [key: string]: IXssObj;
 }
-export { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData, IPerformanceData, IReturnConsoleWarning, IXssObjArray };
+interface IXssConsoleIgnoreEntry {
+    eventType: string;
+    consoleMessage: string;
+}
+export { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData, IPerformanceData, IReturnConsoleWarning, IXssObjArray, IXssConsoleIgnoreEntry };
 //# sourceMappingURL=xssInterfaces.d.ts.map

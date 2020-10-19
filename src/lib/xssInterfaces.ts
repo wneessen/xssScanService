@@ -18,7 +18,8 @@ interface IXssScanConfig {
     userAgent: string,
     allowCache?: boolean,
     resBlockList?: Array<string>,
-    resErrorIgnoreCodes?: Array<string>
+    resErrorIgnoreCodes?: Array<string>,
+    consoleIgnoreList?: Array<IXssConsoleIgnoreEntry>
 }
 
 /**
@@ -134,4 +135,14 @@ interface IXssObjArray {
     [key: string]: IXssObj
 }
 
-export { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData, IPerformanceData, IReturnConsoleWarning, IXssObjArray }
+/**
+ * XssConsoleIgnoreEntry
+ *
+ * @interface IXssConsoleIgnoreEntry
+*/
+interface IXssConsoleIgnoreEntry {
+    eventType: string,
+    consoleMessage: string
+}
+
+export { IXssScanConfig, IXssObj, IXssDataObj, IXssReqObj, IXssResObj, IReturnResourceError, IRequestData, IPerformanceData, IReturnConsoleWarning, IXssObjArray, IXssConsoleIgnoreEntry }

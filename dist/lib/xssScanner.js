@@ -188,6 +188,17 @@ class XssScanner {
             eventMsg = eventObj.text();
             eventType = eventObj.type();
         }
+        let isIgnored = false;
+        this.configObj.consoleIgnoreList.forEach(ignoreEntry => {
+            if (ignoreEntry.consoleMessage === eventMsg && ignoreEntry.eventType === eventType) {
+                if (this.configObj.debugMode) {
+                    console.debug('consoleMsg/eventType combination is on ignorelist. Event will be ignored.');
+                }
+                isIgnored = true;
+            }
+        });
+        if (isIgnored)
+            return;
         if (eventType === 'error')
             return;
         if (eventType === 'warning') {
